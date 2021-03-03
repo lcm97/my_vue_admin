@@ -58,6 +58,12 @@
         </template>
       </el-table-column>  
 
+       <el-table-column align="center" label="原价" width="110"> 
+        <template slot-scope="{row}">
+          <span>{{ row.ori_price }}</span>
+        </template>
+      </el-table-column>    
+
        <el-table-column align="center" label="价格" width="110"> 
         <template slot-scope="{row}">
           <span>{{ row.price }}</span>
@@ -197,6 +203,7 @@ export default {
                 organization: '翔天武术',
                 imglist:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
                 contacts:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
+                ori_price: 200,
                 price: 118,
                 procedure: '6次12节',
                 address: '上海市普陀区金沙江路 1518 弄',
@@ -212,6 +219,7 @@ export default {
                 organization: '翔天武术',
                 imglist:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
                 contacts:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
+                ori_price: 200,
                 price: 118,
                 procedure: '6次12节',
                 address: '上海市普陀区金沙江路 1518 弄',
@@ -227,6 +235,7 @@ export default {
                 organization: '翔天武术',
                 imglist:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
                 contacts:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
+                ori_price: 200,
                 price: 118,
                 procedure: '6次12节',
                 address: '上海市普陀区金沙江路 1518 弄',
@@ -242,6 +251,7 @@ export default {
                 organization: '翔天武术',
                 imglist:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
                 contacts:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
+                ori_price: 200,
                 price: 118,
                 procedure: '6次12节',
                 address: '上海市普陀区金沙江路 1518 弄',

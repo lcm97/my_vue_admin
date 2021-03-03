@@ -53,58 +53,20 @@ export const constantRoutes = [{
             name: 'Dashboard',
             component: () =>
                 import ('@/views/dashboard/index'),
-            meta: { title: 'Dashboard', icon: 'dashboard' }
-        }]
-    },
-
-    {
-        path: '/example',
-        component: Layout,
-        redirect: '/example/table',
-        name: 'Example',
-        meta: { title: 'Example', icon: 'el-icon-s-help' },
-        children: [{
-                path: 'table',
-                name: 'Table',
-                component: () =>
-                    import ('@/views/table/index'),
-                meta: { title: 'Table', icon: 'table' }
-            },
-            {
-                path: 'tree',
-                name: 'Tree',
-                component: () =>
-                    import ('@/views/tree/index'),
-                meta: { title: 'Tree', icon: 'tree' }
-            }
-        ]
-    },
-
-    {
-        path: '/form',
-        component: Layout,
-        children: [{
-            path: 'index',
-            name: 'Form',
-            component: () =>
-                import ('@/views/form/index'),
-            meta: { title: 'Form', icon: 'form' }
+            meta: { title: '控制台', icon: 'dashboard' }
         }]
     },
     {
         path: '/organization',
         component: Layout,
         children: [{
-                path: 'index',
-                name: 'Organization',
-                component: () =>
-                    import ('@/views/organization/index'),
-                meta: { title: '机构管理', icon: 'el-icon-office-building' }
+            path: 'index',
+            name: 'Organization',
+            component: () =>
+                import ('@/views/organization/index'),
+            meta: { title: '机构管理', icon: 'el-icon-office-building' }
 
-            }
-
-        ]
-
+        }]
     },
     {
         path: '/course',
@@ -137,74 +99,56 @@ export const constantRoutes = [{
 
     },
     {
-        path: '/nested',
+        path: '/complaint',
         component: Layout,
-        redirect: '/nested/menu1',
-        name: 'Nested',
-        meta: {
-            title: 'Nested',
-            icon: 'nested'
-        },
         children: [{
-                path: 'menu1',
+                path: 'index',
+                name: 'Complaint',
                 component: () =>
-                    import ('@/views/nested/menu1/index'), // Parent router-view
-                name: 'Menu1',
-                meta: { title: 'Menu1' },
-                children: [{
-                        path: 'menu1-1',
-                        component: () =>
-                            import ('@/views/nested/menu1/menu1-1'),
-                        name: 'Menu1-1',
-                        meta: { title: 'Menu1-1' }
-                    },
-                    {
-                        path: 'menu1-2',
-                        component: () =>
-                            import ('@/views/nested/menu1/menu1-2'),
-                        name: 'Menu1-2',
-                        meta: { title: 'Menu1-2' },
-                        children: [{
-                                path: 'menu1-2-1',
-                                component: () =>
-                                    import ('@/views/nested/menu1/menu1-2/menu1-2-1'),
-                                name: 'Menu1-2-1',
-                                meta: { title: 'Menu1-2-1' }
-                            },
-                            {
-                                path: 'menu1-2-2',
-                                component: () =>
-                                    import ('@/views/nested/menu1/menu1-2/menu1-2-2'),
-                                name: 'Menu1-2-2',
-                                meta: { title: 'Menu1-2-2' }
-                            }
-                        ]
-                    },
-                    {
-                        path: 'menu1-3',
-                        component: () =>
-                            import ('@/views/nested/menu1/menu1-3'),
-                        name: 'Menu1-3',
-                        meta: { title: 'Menu1-3' }
-                    }
-                ]
-            },
-            {
-                path: 'menu2',
-                component: () =>
-                    import ('@/views/nested/menu2/index'),
-                name: 'Menu2',
-                meta: { title: 'menu2' }
-            }
-        ]
-    },
+                    import ('@/views/complaint/index'),
+                meta: { title: '投诉管理', icon: 'el-icon-phone-outline' }
 
+            }
+
+        ]
+
+    },
+    {
+        path: '/finance',
+        component: Layout,
+        children: [{
+                path: 'index',
+                name: 'Finance',
+                component: () =>
+                    import ('@/views/finance/index'),
+                meta: { title: '财务统计', icon: 'el-icon-bank-card' }
+
+            }
+
+        ]
+
+    },
+    {
+        path: '/time',
+        component: Layout,
+        children: [{
+                path: 'index',
+                name: 'Time',
+                component: () =>
+                    import ('@/views/time/index'),
+                meta: { title: '倒计时设置', icon: 'el-icon-time' }
+
+            }
+
+        ]
+
+    },
     {
         path: 'external-link',
         component: Layout,
         children: [{
             path: 'https://panjiachen.github.io/vue-element-admin-site/#/',
-            meta: { title: 'External Link', icon: 'link' }
+            meta: { title: '外部链接', icon: 'link' }
         }]
     },
 
