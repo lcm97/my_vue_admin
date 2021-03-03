@@ -2,7 +2,10 @@
 <div class="app-container">
     <div class="filter-container">
       <el-button class="filter-item"  type="primary" icon="el-icon-edit" @click="handleCreate">
-        添加机构
+        添加课程
+      </el-button>
+      <el-button  :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">
+        导出总表
       </el-button>
     </div>
     <el-table
@@ -21,42 +24,94 @@
         </template>
       </el-table-column>
 
-      <el-table-column align="center" label="机构名字" width="210">
+      <el-table-column align="center" label="课程名称(描述)" width="210">
         <template slot-scope="{row}">
           <span>{{ row.name }}</span>
         </template>
       </el-table-column>
 
-       <el-table-column align="center" label="机构封面" width="250">
+       <el-table-column align="center" label="所属机构" width="210">
+        <template slot-scope="{row}">
+          <span>{{ row.organization }}</span>
+        </template>
+      </el-table-column>     
+
+       <el-table-column align="center" label="课程图片" width="250">
         <template slot-scope="{row}">
           <el-image
             style="width: 150px; height: 110px"
-            :src="row.imgurl"
-            :preview-src-list="[row.imgurl]"
+            :src="row.imglist[0]"
+            :preview-src-list="row.imglist"
             lazy>
           </el-image>
         </template>
-      </el-table-column>   
+      </el-table-column>  
 
-      <el-table-column align="center" label="地址" width="410">
+       <el-table-column align="center" label="联系人二维码" width="250">
+        <template slot-scope="{row}">
+          <el-image
+            style="width: 150px; height: 110px"
+            :src="row.contacts[0]"
+            :preview-src-list="row.contacts"
+            lazy>
+          </el-image>
+        </template>
+      </el-table-column>  
+
+       <el-table-column align="center" label="价格" width="110"> 
+        <template slot-scope="{row}">
+          <span>{{ row.price }}</span>
+        </template>
+      </el-table-column>     
+
+       <el-table-column align="center" label="课时" width="130"> 
+        <template slot-scope="{row}">
+          <span>{{ row.procedure }}</span>
+        </template>
+      </el-table-column>     
+
+      <el-table-column align="center" label="上课地址" width="300">
         <template slot-scope="{row}">
           <span>{{ row.address }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column align="center" label="联系电话" width="310">
+      <el-table-column align="center" label="状态" class-name="status-col" width="100">
         <template slot-scope="{row}">
-          <i class="el-icon-phone-outline"></i>
-          <span style="margin-left: 10px">{{ row.phone }}</span>
+          <el-tag :type="row.status | statusFilter">
+            {{ row.status }}
+          </el-tag>
         </template>
-      </el-table-column>    
+      </el-table-column>
 
-      <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
+      <el-table-column label="参团人数" align="center" width="230" class-name="small-padding fixed-width">
+        <template slot-scope="{row}">
+            <span style="margin-left:15px">人数:{{ row.all }}</span>
+            <span style="margin-left:15px">新生:{{ row.new }}</span>
+            <span style="margin-left:15px">老生:{{ row.old }}</span>
+            <span style="margin-left:15px">已付费:{{ row.payed }}</span>
+            <span style="margin-left:15px">未付费:{{ row.unpayed }}</span>
+        </template>
+      </el-table-column> 
+
+      <el-table-column label="操作" align="center" width="380" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
           </el-button>
-          <el-button v-if="row.status!='deleted'" size="mini" type="danger" @click="handleDelete(row,$index)">
+          <el-button type="info" size="mini" @click="handleRefresh(row,$index)">
+            刷新
+          </el-button>
+          <el-button v-if="row.status!='下架'" type="warning" size="mini" @click="handleDraft(row,$index)">
+            下架
+          </el-button>
+          <el-button v-if="row.status!='进行中'" type="success" size="mini" @click="handlePublish(row,$index)">
+            发布
+          </el-button>          
+          <el-button type="primary" size="mini" @click="handleExport(row,$index)">
+            导出
+          </el-button>
+          <el-button v-if="row.status!='删除'" size="mini" type="danger" @click="handleDelete(row,$index)">
             删除
           </el-button>
         </template>
@@ -118,34 +173,84 @@
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 export default {
     components: { Pagination },
+    filters: {
+        statusFilter(status) {
+            const statusMap = {
+                进行中: 'success', //进行中
+                下架: 'info',   //下架
+                删除: 'danger'  //删除
+            }
+            return statusMap[status]
+        },
+        typeFilter(type) {
+            return calendarTypeKeyValue[type]
+        }
+    },
     data(){
         return{
             tableKey: 0,
             listLoading:false,
+            downloadLoading: false,
             list: [{
                 id: 123,
-                name: '王小虎',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
+                name: '功夫明星跆拳道',
+                organization: '翔天武术',
+                imglist:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
+                contacts:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
+                price: 118,
+                procedure: '6次12节',
                 address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
-            }, {
+                status: '进行中',
+                all: 200,  //总报名人数
+                new: 150,  
+                old: 50,
+                payed: 190,
+                unpayed: 10,
+            },{
                 id: 124,
-                name: '王小虎',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
+                name: '功夫明星跆拳道',
+                organization: '翔天武术',
+                imglist:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
+                contacts:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
+                price: 118,
+                procedure: '6次12节',
                 address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
-            }, {
+                status: '进行中',
+                all: 200,  //总报名人数
+                new: 150,  
+                old: 50,
+                payed: 190,
+                unpayed: 10,
+            },{
                 id: 125,
-                name: '王小虎',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
+                name: '功夫明星跆拳道',
+                organization: '翔天武术',
+                imglist:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
+                contacts:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
+                price: 118,
+                procedure: '6次12节',
                 address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
-            }, {
+                status: '下架',
+                all: 200,  //总报名人数
+                new: 150,  
+                old: 50,
+                payed: 190,
+                unpayed: 10,
+            },{
                 id: 126,
-                name: '王小虎',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
+                name: '功夫明星跆拳道',
+                organization: '翔天武术',
+                imglist:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
+                contacts:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
+                price: 118,
+                procedure: '6次12节',
                 address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
+                status: '进行中',
+                all: 200,  //总报名人数
+                new: 150,  
+                old: 50,
+                payed: 190,
+                unpayed: 10,
             }],
 
             total: 0,
@@ -275,7 +380,14 @@ export default {
             this.$message.error('上传头像图片大小不能超过 2MB!');
             }
             return isLt2M;
-        }
+        },
+        handleDownload() {
+            this.downloadLoading = true
+            console.log("exporting")
+            setTimeout(() => {
+                this.downloadLoading = false
+            }, 1.5 * 1000)  
+        },
 
     }
     

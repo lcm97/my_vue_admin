@@ -106,7 +106,36 @@ export const constantRoutes = [{
         ]
 
     },
+    {
+        path: '/course',
+        component: Layout,
+        children: [{
+                path: 'index',
+                name: 'Course',
+                component: () =>
+                    import ('@/views/course/index'),
+                meta: { title: '课程管理', icon: 'el-icon-collection' }
 
+            }
+
+        ]
+
+    },
+    {
+        path: '/group',
+        component: Layout,
+        children: [{
+                path: 'index',
+                name: 'Group',
+                component: () =>
+                    import ('@/views/group/index'),
+                meta: { title: '拼团管理', icon: 'el-icon-coffee-cup' }
+
+            }
+
+        ]
+
+    },
     {
         path: '/nested',
         component: Layout,

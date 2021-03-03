@@ -1,8 +1,9 @@
 <template>
 <div class="app-container">
     <div class="filter-container">
-      <el-button class="filter-item"  type="primary" icon="el-icon-edit" @click="handleCreate">
-        添加机构
+      <el-input v-model="listQuery.name" placeholder="输入团长或团员名字" style="width: 200px;" class="filter-item"/>
+      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
+        搜索
       </el-button>
     </div>
     <el-table
@@ -21,42 +22,55 @@
         </template>
       </el-table-column>
 
-      <el-table-column align="center" label="机构名字" width="210">
+      <el-table-column align="center" label="所属课程" width="210">
         <template slot-scope="{row}">
-          <span>{{ row.name }}</span>
+          <span>{{ row.course }}</span>
         </template>
       </el-table-column>
 
-       <el-table-column align="center" label="机构封面" width="250">
+       <el-table-column align="center" label="规模类型" width="180">
         <template slot-scope="{row}">
-          <el-image
-            style="width: 150px; height: 110px"
-            :src="row.imgurl"
-            :preview-src-list="[row.imgurl]"
-            lazy>
-          </el-image>
+          <span>{{ row.type }}</span>
         </template>
-      </el-table-column>   
+      </el-table-column>     
 
-      <el-table-column align="center" label="地址" width="410">
+       <el-table-column align="center" label="参团人数" width="180">
         <template slot-scope="{row}">
-          <span>{{ row.address }}</span>
+          <span>{{ row.num }}</span>
+        </template>
+      </el-table-column>     
+
+
+       <el-table-column align="center" label="开团时间" width="180"> 
+        <template slot-scope="{row}">
+          <span>{{ row.date }}</span>
+        </template>
+      </el-table-column>     
+
+      <el-table-column align="center" label="团长" width="180">
+        <template slot-scope="{row}">
+          <span>{{ row.captain }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column align="center" label="联系电话" width="310">
-        <template slot-scope="{row}">
-          <i class="el-icon-phone-outline"></i>
-          <span style="margin-left: 10px">{{ row.phone }}</span>
-        </template>
-      </el-table-column>    
 
-      <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
-        <template slot-scope="{row,$index}">
-          <el-button type="primary" size="mini" @click="handleUpdate(row)">
-            编辑
-          </el-button>
-          <el-button v-if="row.status!='deleted'" size="mini" type="danger" @click="handleDelete(row,$index)">
+      <el-table-column label="参团人员" align="center" width="230" class-name="small-padding fixed-width">
+        <template slot-scope="{row}" >
+            <div class="crew" >
+                <div v-if="row.crewlist.length>0">
+                    <div  v-for="crew in row.crewlist" :key="crew.id" style="margin-bottom:5px" class="crewitem">
+                        <span style="margin-right:15px;width:80px;text-align: center;">{{crew.name}}</span>
+                        <el-button size="mini" icon="el-icon-upload2" type="success" @click="handleLevelUp(crew)"></el-button>
+                    </div>
+                </div>
+                <div v-else style="color:gray;">暂时无人参团</div>
+            </div>
+        </template>
+      </el-table-column> 
+
+      <el-table-column label="操作" align="center" width="100" class-name="small-padding fixed-width">
+        <template>
+          <el-button size="mini" type="danger" @click="handleDelete(row,$index)">
             删除
           </el-button>
         </template>
@@ -122,40 +136,45 @@ export default {
         return{
             tableKey: 0,
             listLoading:false,
+            downloadLoading: false,
             list: [{
                 id: 123,
-                name: '王小虎',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-                address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
-            }, {
-                id: 124,
-                name: '王小虎',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-                address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
-            }, {
-                id: 125,
-                name: '王小虎',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-                address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
-            }, {
-                id: 126,
-                name: '王小虎',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-                address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
+                course: '功夫明星跆拳道',
+                type:6,
+                num:5,
+                date: '2017-12-1',
+                captain: '张三',
+                crewlist:[
+                    {
+                        id:1,
+                        name:'李四'
+                    },{
+                        id:2,
+                        name:'王麻子'
+                    },
+                    {
+                        id:3,
+                        name:'李四'
+                    },{
+                        id:4,
+                        name:'王麻子'
+                    }
+                ],
+            },{
+                id: 123,
+                course: '功夫明星跆拳道',
+                type:3,
+                num:1,
+                date: '2017-12-1',
+                captain: '张三',
+                crewlist:[],
             }],
 
             total: 0,
             listQuery: {
                 page: 1,
                 limit: 10,
-                importance: undefined,
-                title: undefined,
-                type: undefined,
-                sort: '+id'
+                name: undefined, //搜索团长或团员名字
             },
           
             dialogFormVisible: false,
@@ -205,6 +224,11 @@ export default {
             //     }, 1.5 * 1000)
             // })
 
+        },
+        handleFilter() {
+            this.listQuery.page = 1
+            this.getList()
+            console.log(this.listQuery.name)
         },
         resetTemp() {
             this.temp = {
@@ -275,7 +299,14 @@ export default {
             this.$message.error('上传头像图片大小不能超过 2MB!');
             }
             return isLt2M;
-        }
+        },
+        handleDownload() {
+            this.downloadLoading = true
+            console.log("exporting")
+            setTimeout(() => {
+                this.downloadLoading = false
+            }, 1.5 * 1000)  
+        },
 
     }
     
@@ -283,5 +314,19 @@ export default {
 </script>
 
 <style scoped>
+.crew{
+    display: flex; 
+    flex-direction: column; 
+    justify-content:center; 
+    align-items: center;
+}
+.crewitem{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    width: 130px;
+    
+}
 
 </style>
