@@ -57,6 +57,18 @@ export const constantRoutes = [{
         }]
     },
     {
+        path: '/links',
+        component: Layout,
+        children: [{
+            path: 'index',
+            name: 'Links',
+            component: () =>
+                import ('@/views/links/index'),
+            meta: { title: '链接管理', icon: 'el-icon-link' }
+
+        }]
+    },
+    {
         path: '/organization',
         component: Layout,
         children: [{

@@ -1,18 +1,10 @@
 <template>
 <div class="app-container">
     <div class="filter-container">
-      <el-button class="filter-item" style="margin-right:30px;"  type="primary" icon="el-icon-edit" @click="handleCreate">
-        添加机构
-      </el-button>
-      <el-input v-model="listQuery.name" placeholder="机构名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-select v-model="listQuery.linkname" placeholder="所属链接" clearable class="filter-item" style="width: 280px">
-        <el-option v-for="item in Links" :key="item.id" :label="item.linkname" :value="item.id" />
-      </el-select>
-      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
-        搜索
+      <el-button class="filter-item"  type="primary" icon="el-icon-edit" @click="handleCreate">
+        添加链接
       </el-button>
     </div>
-
     <el-table
       :key="tableKey"
       v-loading="listLoading"
@@ -29,46 +21,25 @@
         </template>
       </el-table-column>
 
-      <el-table-column align="center" label="机构名字" width="210">
+      <el-table-column align="center" label="链接名称" width="410">
         <template slot-scope="{row}">
           <span>{{ row.name }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column align="center" label="所属链接" width="210">
+      <el-table-column align="center" label="备注" width="410">
         <template slot-scope="{row}">
-          <span>{{ row.linkname }}</span>
+          <span>{{ row.remark }}</span>
         </template>
       </el-table-column>
 
-       <el-table-column align="center" label="机构封面" width="250">
-        <template slot-scope="{row}">
-          <el-image
-            style="width: 150px; height: 110px"
-            :src="row.imgurl"
-            :preview-src-list="[row.imgurl]"
-            lazy>
-          </el-image>
-        </template>
-      </el-table-column>   
-
-      <el-table-column align="center" label="地址" width="410">
-        <template slot-scope="{row}">
-          <span>{{ row.address }}</span>
-        </template>
-      </el-table-column>
-
-      <el-table-column align="center" label="联系电话" width="310">
-        <template slot-scope="{row}">
-          <i class="el-icon-phone-outline"></i>
-          <span style="margin-left: 10px">{{ row.phone }}</span>
-        </template>
-      </el-table-column>    
-
-      <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="330" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
+          </el-button>
+         <el-button type="primary" size="mini" @click="handleQRcode(row)">
+            生成二维码
           </el-button>
           <el-button v-if="row.status!='deleted'" size="mini" type="danger" @click="handleDelete(row,$index)">
             删除
@@ -138,44 +109,22 @@ export default {
             listLoading:false,
             list: [{
                 id: 123,
-                name: '智慧教育',
-                linkname: '杨之光两大校区开学季回馈新老学员',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-                address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
+                name: '杨之光两大校区开学季回馈新老学员',
+                remark: '深圳地区'
             }, {
                 id: 124,
-                name: '智慧教育',
-                linkname: '杨之光两大校区开学季回馈新老学员',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-                address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
+                name: '杨之光两大校区开学季回馈新老学员',
+                remark: '深圳地区'
             }, {
                 id: 125,
-                name: '智慧教育',
-                linkname: '杨之光两大校区开学季回馈新老学员',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-                address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
+                name: '杨之光两大校区开学季回馈新老学员',
+                remark: '深圳地区'
             }, {
                 id: 126,
-                name: '智慧教育',
-                linkname: '杨之光两大校区开学季回馈新老学员',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-                address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
+                name: '杨之光两大校区开学季回馈新老学员',
+                remark: '深圳地区'
             }],
 
-            Links:[{
-              id:1,
-              linkname:'杨之光两大校区开学季回馈新老学员',
-            },{
-              id:1,
-              linkname:'杨之光两大校区开学季回馈新老学员',
-            },{
-              id:1,
-              linkname:'杨之光两大校区开学季回馈新老学员',
-            }],
             total: 0,
             listQuery: {
                 page: 1,
