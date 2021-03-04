@@ -109,9 +109,6 @@ export default {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
           this.loading = true
-          console.log(this.loginForm.username)
-          console.log(this.loginForm.password)
-
           this.$store.dispatch('user/login', this.loginForm).then(() => { //'user/login'为vues store文件夹下的方法名
 
             this.$router.push({ path: this.redirect || '/' }) //登录成功之后重定向到首页
