@@ -54,37 +54,13 @@
     <!--弹出表单-->
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="110px" style="width: 600px; margin-left:50px;">
-            <el-form-item label="机构名字" prop="name">
-                <el-input v-model="temp.name" style="width: 400px; "/>
+            <el-form-item label="链接名字" prop="name">
+                <el-input v-model="temp.name" style="width: 450px; "/>
             </el-form-item>
 
-            <el-form-item label="上传封面" prop="imgurl">
-                <el-upload
-                    class="upload-demo"
-                    action="https://jsonplaceholder.typicode.com/posts/"
-                    :on-preview="handlePreview"
-                    :on-remove="handleRemove"
-                    :on-success="handleUploadSuccess"
-                    :before-upload="beforeImageUpload"
-                    :multiple="false"
-                    :show-file-list="false"
-                    accept="image/png,image/jpg,image/jpeg"
-                    >
-                    <img v-if="temp.imageurl" :src="temp.imageurl">
-                    <el-button v-else size="small" type="primary">点击上传</el-button>
-                    <div slot="tip" class="el-upload__tip">只能上传jpg/png/jpeg文件,且小于2M</div>
-                </el-upload>
-
-            </el-form-item>
-
-            <el-form-item label="机构地址" prop="address">
-                <el-input v-model="temp.address" style="width: 450px;"/>
-            </el-form-item>
-
-            <el-form-item label="联系电话" prop="phone">
-                <el-input v-model="temp.phone" style="width: 300px;"/>
-            </el-form-item>           
-
+            <el-form-item label="备注" prop="remark">
+                <el-input v-model="temp.remark" style="width: 450px;"/>
+            </el-form-item>      
 
       </el-form>
             
@@ -101,61 +77,40 @@
 
 <script>
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
+import { fetchList, fetchLink, createLink, updateLink, removeLink } from '@/api/links'
+
 export default {
     components: { Pagination },
     data(){
         return{
             tableKey: 0,
             listLoading:false,
-            list: [{
-                id: 123,
-                name: '杨之光两大校区开学季回馈新老学员',
-                remark: '深圳地区'
-            }, {
-                id: 124,
-                name: '杨之光两大校区开学季回馈新老学员',
-                remark: '深圳地区'
-            }, {
-                id: 125,
-                name: '杨之光两大校区开学季回馈新老学员',
-                remark: '深圳地区'
-            }, {
-                id: 126,
-                name: '杨之光两大校区开学季回馈新老学员',
-                remark: '深圳地区'
-            }],
-
+            list: [],
             total: 0,
             listQuery: {
                 page: 1,
                 limit: 10,
-                importance: undefined,
-                title: undefined,
-                type: undefined,
-                sort: '+id'
+                name: undefined,
+                remark: undefined,
             },
           
             dialogFormVisible: false,
             dialogStatus: '',
             textMap: {
-                update: '编辑机构',
-                create: '新建机构'
+                update: '编辑链接',
+                create: '新建链接'
             },
 
             temp: {
+                id: undefined,
                 name: '',
-                imgurl: '',
-                address: '',
-                phone: '',
+                remark: '',
             },
             rules:{
-                name: [{ required: true, message: '请输入机构名称', trigger: 'blur' }],
-                imgurl: [{ required: true, message: '请上传封面', trigger: 'blur' }],
-                address: [{ required: true, message: '请输入机构地址', trigger: 'change' }],
-                phone: [{ required: true, message: '请输入联系方式', trigger: 'change' }]
+                name: [{ required: true, message: '请输入链接名称', trigger: 'blur' }],
+                remark: [{ required: true, message: '请输入备注', trigger: 'change' }],
             }
-        
-
+    
         }
     },
     created() {
@@ -164,47 +119,41 @@ export default {
     methods:{
         getList() {
             this.listLoading = true
-            //后台根据下面两个参数查找数据
-            console.log(this.listQuery.page)
-            console.log(this.listQuery.limit)
-            this.list = this.list
-            this.total = this.list.length
-            setTimeout(() => {
+            fetchList(this.listQuery).then(response => {
+                this.list = response.data.items
+                this.total = response.data.total
                 this.listLoading = false
-            }, 1.5 * 1000)           
-            // fetchList(this.listQuery).then(response => {
-            //     this.list = response.data.items
-            //     this.total = response.data.total
-
-            //     // Just to simulate the time of the request
-            //     setTimeout(() => {
-            //     this.listLoading = false
-            //     }, 1.5 * 1000)
-            // })
-
+            })
         },
         resetTemp() {
             this.temp = {
+                id:undefined,
                 name: '',
-                imgurl: '',
-                address: '',
-                phone:''
+                remark: '',
             }
         },
         handleCreate() {
-                this.resetTemp()
-                this.dialogStatus = 'create'
-                this.dialogFormVisible = true
-                this.$nextTick(() => {
-                    this.$refs['dataForm'].clearValidate()
+            this.resetTemp()
+            this.dialogStatus = 'create'
+            this.dialogFormVisible = true
+            this.$nextTick(() => {
+                this.$refs['dataForm'].clearValidate()
             })
 
         },
         createData() {
             this.$refs['dataForm'].validate((valid) => {
                 if (valid) {
-                    //调用创建机构接口
-                    console.log(this.temp)
+                    createLink(this.temp).then(response => {
+                        this.list.unshift(response.data.item)
+                        this.dialogFormVisible = false
+                        this.$notify({
+                        title: 'Success',
+                        message: 'Created Successfully',
+                        type: 'success',
+                        duration: 2000
+                        })
+                    })
                 }
             })
         },
@@ -221,20 +170,36 @@ export default {
             this.$refs['dataForm'].validate((valid) => {
                 if (valid) {
                     const tempData = Object.assign({}, this.temp)
+                    updateLink(tempData).then(() => {
+                        const index = this.list.findIndex(v => v.id === this.temp.id)
+                        this.list.splice(index, 1, this.temp)
+                        this.dialogFormVisible = false
+                        this.$notify({
+                        title: 'Success',
+                        message: 'Update Successfully',
+                        type: 'success',
+                        duration: 2000
+                        })
+                    })
+
                     //调用更新机构接口
                     console.log(tempData)
                 }
             })
         },
+
         handleDelete(row, index) {
-            console.log(row.name)
-            this.$notify({
-                title: 'Success',
-                message: 'Delete Successfully',
-                type: 'success',
-                duration: 2000
+            this.temp = Object.assign({}, row) // copy obj
+            removeLink(this.temp).then(() => {
+                this.$notify({
+                    title: 'Success',
+                    message: 'Delete Successfully',
+                    type: 'success',
+                    duration: 2000
+                })
+                this.list.splice(index, 1)
             })
-            this.list.splice(index, 1)
+
         },
         handleRemove(file, fileList) {
             console.log(file, fileList);
