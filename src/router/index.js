@@ -69,13 +69,13 @@ export const constantRoutes = [{
         }]
     },
     {
-        path: '/organization',
+        path: '/company',
         component: Layout,
         children: [{
             path: 'index',
-            name: 'Organization',
+            name: 'Companyn',
             component: () =>
-                import ('@/views/organization/index'),
+                import ('@/views/company/index'),
             meta: { title: '机构管理', icon: 'el-icon-office-building' }
 
         }]

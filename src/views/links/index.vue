@@ -33,6 +33,14 @@
         </template>
       </el-table-column>
 
+      <el-table-column align="center" label="音乐" width="410">
+        <template slot-scope="{row}">
+          <audio controls :src="row.music" lazy>
+            您的浏览器不支持 audio 元素。
+        </audio>
+        </template>
+      </el-table-column>
+
       <el-table-column label="操作" align="center" width="330" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
@@ -60,7 +68,22 @@
 
             <el-form-item label="备注" prop="remark">
                 <el-input v-model="temp.remark" style="width: 450px;"/>
-            </el-form-item>      
+            </el-form-item>    
+            <el-form-item label="上传音乐" prop="music">
+                <el-upload
+                    class="upload-demo"
+                    v-bind:action= "upload_api"
+                    accept="audio/*"
+                    :before-remove="beforeRemove"
+                    :limit="1"
+                    :on-exceed="handleExceed"
+                    :on-success="handleUploadSuccess"
+                    :file-list="fileList">
+                    <el-button size="small" type="primary">点击上传</el-button>
+                    <div slot="tip" class="el-upload__tip">只能上传mp3/wav文件</div>
+                </el-upload>
+            </el-form-item>                
+
 
       </el-form>
             
@@ -105,11 +128,16 @@ export default {
                 id: undefined,
                 name: '',
                 remark: '',
+                music: '',
             },
             rules:{
                 name: [{ required: true, message: '请输入链接名称', trigger: 'blur' }],
                 remark: [{ required: true, message: '请输入备注', trigger: 'change' }],
-            }
+                music:[{ required: true, message: '请上传图片', trigger: 'change' }],
+            },
+
+            upload_api: process.env.VUE_APP_UPLOAD_API,
+            fileList:[]
     
         }
     },
@@ -130,10 +158,12 @@ export default {
                 id:undefined,
                 name: '',
                 remark: '',
+                music: ''
             }
         },
         handleCreate() {
             this.resetTemp()
+            this.fileList = []
             this.dialogStatus = 'create'
             this.dialogFormVisible = true
             this.$nextTick(() => {
@@ -160,6 +190,10 @@ export default {
 
         handleUpdate(row) {
             this.temp = Object.assign({}, row) // copy obj
+            this.fileList = [{
+                name:row.music.split('/').slice(-1)[0],
+                url:row.music
+            }]
             this.dialogStatus = 'update'
             this.dialogFormVisible = true
             this.$nextTick(() => {
@@ -181,9 +215,6 @@ export default {
                         duration: 2000
                         })
                     })
-
-                    //调用更新机构接口
-                    console.log(tempData)
                 }
             })
         },
@@ -201,22 +232,16 @@ export default {
             })
 
         },
-        handleRemove(file, fileList) {
-            console.log(file, fileList);
+
+        beforeRemove(file, fileList) {
+            return this.$confirm(`确定移除 ${ file.name }？`);
         },
-        handlePreview(file) {
-            console.log(file);
+        handleExceed(files, fileList) {
+            this.$message.warning(`当前限制选择 1 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
         },
-        handleUploadSuccess(res, file) {
-            console.log(URL.createObjectURL(file.raw))
-            this.temp.imgurl = URL.createObjectURL(file.raw);
-        },
-        beforeImageUpload(file) {
-            const isLt2M = file.size / 1024 / 1024 < 2;
-            if (!isLt2M) {
-            this.$message.error('上传头像图片大小不能超过 2MB!');
-            }
-            return isLt2M;
+        handleUploadSuccess(response, file, fileList) {
+            console.log(file.response.data.path)
+            this.temp.music = file.response.data.path
         }
 
     }

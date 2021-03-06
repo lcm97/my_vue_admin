@@ -6,7 +6,7 @@
       </el-button>
       <el-input v-model="listQuery.name" placeholder="机构名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-select v-model="listQuery.linkname" placeholder="所属链接" clearable class="filter-item" style="width: 280px">
-        <el-option v-for="item in Links" :key="item.id" :label="item.linkname" :value="item.id" />
+        <el-option v-for="item in Links" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
         搜索
@@ -37,7 +37,7 @@
 
       <el-table-column align="center" label="所属链接" width="210">
         <template slot-scope="{row}">
-          <span>{{ row.linkname }}</span>
+          <span>{{ row.link_name }}</span>
         </template>
       </el-table-column>
 
@@ -45,12 +45,23 @@
         <template slot-scope="{row}">
           <el-image
             style="width: 150px; height: 110px"
-            :src="row.imgurl"
-            :preview-src-list="[row.imgurl]"
+            :src="row.imglist[0]"
+            :preview-src-list="row.imglist"
             lazy>
           </el-image>
         </template>
       </el-table-column>   
+
+       <el-table-column align="center" label="联系人二维码" width="250">
+        <template slot-scope="{row}">
+          <el-image
+            style="width: 150px; height: 110px"
+            :src="row.contacts[0]"
+            :preview-src-list="row.contacts"
+            lazy>
+          </el-image>
+        </template>
+      </el-table-column>  
 
       <el-table-column align="center" label="地址" width="410">
         <template slot-scope="{row}">
@@ -87,7 +98,9 @@
                 <el-input v-model="temp.name" style="width: 400px; "/>
             </el-form-item>
 
-            <el-form-item label="上传封面" prop="imgurl">
+
+
+            <el-form-item label="上传封面" prop="imglist">
                 <el-upload
                     class="upload-demo"
                     action="https://jsonplaceholder.typicode.com/posts/"
@@ -95,13 +108,13 @@
                     :on-remove="handleRemove"
                     :on-success="handleUploadSuccess"
                     :before-upload="beforeImageUpload"
-                    :multiple="false"
-                    :show-file-list="false"
+                    multiple
+                    :limit="3"
+                    :file-list="fileList"
                     accept="image/png,image/jpg,image/jpeg"
                     >
-                    <img v-if="temp.imageurl" :src="temp.imageurl">
-                    <el-button v-else size="small" type="primary">点击上传</el-button>
-                    <div slot="tip" class="el-upload__tip">只能上传jpg/png/jpeg文件,且小于2M</div>
+                    <el-button size="small" type="primary">点击上传</el-button>
+                    <div slot="tip" class="el-upload__tip">只能上传jpg/png/jpeg文件,且小于1M</div>
                 </el-upload>
 
             </el-form-item>
@@ -130,60 +143,22 @@
 
 <script>
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
+import { fetchList, fetchLinkList, createLink, updateLink, removeLink } from '@/api/company'
 export default {
     components: { Pagination },
     data(){
         return{
             tableKey: 0,
             listLoading:false,
-            list: [{
-                id: 123,
-                name: '智慧教育',
-                linkname: '杨之光两大校区开学季回馈新老学员',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-                address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
-            }, {
-                id: 124,
-                name: '智慧教育',
-                linkname: '杨之光两大校区开学季回馈新老学员',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-                address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
-            }, {
-                id: 125,
-                name: '智慧教育',
-                linkname: '杨之光两大校区开学季回馈新老学员',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-                address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
-            }, {
-                id: 126,
-                name: '智慧教育',
-                linkname: '杨之光两大校区开学季回馈新老学员',
-                imgurl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-                address: '上海市普陀区金沙江路 1518 弄',
-                phone: '15622393456',
-            }],
+            list: [],
 
-            Links:[{
-              id:1,
-              linkname:'杨之光两大校区开学季回馈新老学员',
-            },{
-              id:1,
-              linkname:'杨之光两大校区开学季回馈新老学员',
-            },{
-              id:1,
-              linkname:'杨之光两大校区开学季回馈新老学员',
-            }],
+            Links:[], //链接链表
             total: 0,
             listQuery: {
                 page: 1,
                 limit: 10,
-                importance: undefined,
-                title: undefined,
-                type: undefined,
-                sort: '+id'
+
+                name:undefined
             },
           
             dialogFormVisible: false,
@@ -195,49 +170,49 @@ export default {
 
             temp: {
                 name: '',
-                imgurl: '',
+                imglist: [],
                 address: '',
                 phone: '',
             },
             rules:{
                 name: [{ required: true, message: '请输入机构名称', trigger: 'blur' }],
-                imgurl: [{ required: true, message: '请上传封面', trigger: 'blur' }],
+                imglist: [{ required: true, message: '请上传封面', trigger: 'blur' }],
                 address: [{ required: true, message: '请输入机构地址', trigger: 'change' }],
                 phone: [{ required: true, message: '请输入联系方式', trigger: 'change' }]
-            }
+            },
+
+            fileList:[]  //上传的图片列表
         
 
         }
     },
     created() {
         this.getList()
+        this.getLinksList()
     },
     methods:{
         getList() {
             this.listLoading = true
-            //后台根据下面两个参数查找数据
-            console.log(this.listQuery.page)
-            console.log(this.listQuery.limit)
-            this.list = this.list
-            this.total = this.list.length
-            setTimeout(() => {
+            fetchList(this.listQuery).then(response => {
+                this.list = response.data.items
+                this.total = response.data.total
                 this.listLoading = false
-            }, 1.5 * 1000)           
-            // fetchList(this.listQuery).then(response => {
-            //     this.list = response.data.items
-            //     this.total = response.data.total
+            })
+        },
+        getLinksList(){
+            fetchLinkList().then(response => {
+                this.Links = response.data.items
+            })
+        },
 
-            //     // Just to simulate the time of the request
-            //     setTimeout(() => {
-            //     this.listLoading = false
-            //     }, 1.5 * 1000)
-            // })
-
+        handleFilter() {
+          this.listQuery.page = 1
+          this.getList()
         },
         resetTemp() {
             this.temp = {
                 name: '',
-                imgurl: '',
+                imglist: [],
                 address: '',
                 phone:''
             }
@@ -295,14 +270,14 @@ export default {
         },
         handleUploadSuccess(res, file) {
             console.log(URL.createObjectURL(file.raw))
-            this.temp.imgurl = URL.createObjectURL(file.raw);
+            //this.temp.imgurl = URL.createObjectURL(file.raw);
         },
         beforeImageUpload(file) {
-            const isLt2M = file.size / 1024 / 1024 < 2;
-            if (!isLt2M) {
-            this.$message.error('上传头像图片大小不能超过 2MB!');
+            const isLt1M = file.size / 1024 / 1024 < 1;
+            if (!isLt1M) {
+            this.$message.error('上传图片大小不能超过 1MB!');
             }
-            return isLt2M;
+            return isLt1M;
         }
 
     }
