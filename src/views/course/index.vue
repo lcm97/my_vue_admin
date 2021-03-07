@@ -7,6 +7,13 @@
       <el-button  :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">
         导出总表
       </el-button>
+      <el-input v-model="listQuery.name" placeholder="课程名称" style="width: 200px;margin-left:20px" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-select v-model="listQuery.company" placeholder="所属机构" clearable class="filter-item" style="width: 280px">
+        <el-option v-for="item in CompanyList" :key="item.id" :label="item.name" :value="item.name" />
+      </el-select>
+      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
+        搜索
+      </el-button>
     </div>
     <el-table
       :key="tableKey"
@@ -32,7 +39,7 @@
 
        <el-table-column align="center" label="所属机构" width="210">
         <template slot-scope="{row}">
-          <span>{{ row.organization }}</span>
+          <span>{{ row.company }}</span>
         </template>
       </el-table-column>     
 
@@ -40,19 +47,8 @@
         <template slot-scope="{row}">
           <el-image
             style="width: 150px; height: 110px"
-            :src="row.imglist[0]"
-            :preview-src-list="row.imglist"
-            lazy>
-          </el-image>
-        </template>
-      </el-table-column>  
-
-       <el-table-column align="center" label="联系人二维码" width="250">
-        <template slot-scope="{row}">
-          <el-image
-            style="width: 150px; height: 110px"
-            :src="row.contacts[0]"
-            :preview-src-list="row.contacts"
+            :src="row.img"
+            :preview-src-list="[row.img]"
             lazy>
           </el-image>
         </template>
@@ -72,15 +68,9 @@
 
        <el-table-column align="center" label="课时" width="130"> 
         <template slot-scope="{row}">
-          <span>{{ row.procedure }}</span>
+          <span>{{ row.class }}</span>
         </template>
       </el-table-column>     
-
-      <el-table-column align="center" label="上课地址" width="300">
-        <template slot-scope="{row}">
-          <span>{{ row.address }}</span>
-        </template>
-      </el-table-column>
 
       <el-table-column align="center" label="状态" class-name="status-col" width="100">
         <template slot-scope="{row}">
@@ -130,37 +120,53 @@
     <!--弹出表单-->
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="110px" style="width: 600px; margin-left:50px;">
-            <el-form-item label="机构名字" prop="name">
+            <el-form-item label="课程名字" prop="name">
                 <el-input v-model="temp.name" style="width: 400px; "/>
             </el-form-item>
 
-            <el-form-item label="上传封面" prop="imgurl">
+            <el-form-item label="选择所属机构" prop="company">
+              <el-select v-model="temp.company" filterable placeholder="请选择" style="width: 400px; " >
+                <el-option
+                  v-for="item in CompanyList"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.name"
+                  style="width: 480px; ">
+                  <span style="float: left">{{ item.name }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ item.id }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="上传封面" prop="img">
                 <el-upload
                     class="upload-demo"
-                    action="https://jsonplaceholder.typicode.com/posts/"
-                    :on-preview="handlePreview"
+                    v-bind:action= "upload_api"
+                    :before-remove="beforeRemove"
                     :on-remove="handleRemove"
                     :on-success="handleUploadSuccess"
                     :before-upload="beforeImageUpload"
-                    :multiple="false"
-                    :show-file-list="false"
+                    :on-exceed="handleExceed"
+                    multiple
+                    :limit="1"
+                    :file-list="imgList"
                     accept="image/png,image/jpg,image/jpeg"
                     >
-                    <img v-if="temp.imageurl" :src="temp.imageurl">
-                    <el-button v-else size="small" type="primary">点击上传</el-button>
-                    <div slot="tip" class="el-upload__tip">只能上传jpg/png/jpeg文件,且小于2M</div>
+                    <el-button size="small" type="primary">点击上传</el-button>
+                    <div slot="tip" class="el-upload__tip">只能上传1张jpg/png/jpeg文件,且小于1M</div>
                 </el-upload>
-
             </el-form-item>
 
-            <el-form-item label="机构地址" prop="address">
-                <el-input v-model="temp.address" style="width: 450px;"/>
+            <el-form-item label="原价" prop="ori_price">
+                <el-input v-model.number="temp.ori_price" style="width: 200px;"/>
+            </el-form-item>
+            <el-form-item label="现价" prop="price">
+                <el-input v-model.number="temp.price" style="width: 200px;"/>
             </el-form-item>
 
-            <el-form-item label="联系电话" prop="phone">
-                <el-input v-model="temp.phone" style="width: 300px;"/>
-            </el-form-item>           
-
+            <el-form-item label="课时" prop="class">
+                <el-input v-model="temp.class" style="width: 200px;"/>
+            </el-form-item>         
 
       </el-form>
             
@@ -177,6 +183,8 @@
 
 <script>
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
+import { fetchList, fetchCompanyList, createCourse } from '@/api/course'
+import { deleteFile } from '@/api/common'
 export default {
     components: { Pagination },
     filters: {
@@ -197,136 +205,91 @@ export default {
             tableKey: 0,
             listLoading:false,
             downloadLoading: false,
-            list: [{
-                id: 123,
-                name: '功夫明星跆拳道',
-                organization: '翔天武术',
-                imglist:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
-                contacts:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
-                ori_price: 200,
-                price: 118,
-                procedure: '6次12节',
-                address: '上海市普陀区金沙江路 1518 弄',
-                status: '进行中',
-                all: 200,  //总报名人数
-                new: 150,  
-                old: 50,
-                payed: 190,
-                unpayed: 10,
-            },{
-                id: 124,
-                name: '功夫明星跆拳道',
-                organization: '翔天武术',
-                imglist:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
-                contacts:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
-                ori_price: 200,
-                price: 118,
-                procedure: '6次12节',
-                address: '上海市普陀区金沙江路 1518 弄',
-                status: '进行中',
-                all: 200,  //总报名人数
-                new: 150,  
-                old: 50,
-                payed: 190,
-                unpayed: 10,
-            },{
-                id: 125,
-                name: '功夫明星跆拳道',
-                organization: '翔天武术',
-                imglist:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
-                contacts:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
-                ori_price: 200,
-                price: 118,
-                procedure: '6次12节',
-                address: '上海市普陀区金沙江路 1518 弄',
-                status: '下架',
-                all: 200,  //总报名人数
-                new: 150,  
-                old: 50,
-                payed: 190,
-                unpayed: 10,
-            },{
-                id: 126,
-                name: '功夫明星跆拳道',
-                organization: '翔天武术',
-                imglist:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
-                contacts:['https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'],
-                ori_price: 200,
-                price: 118,
-                procedure: '6次12节',
-                address: '上海市普陀区金沙江路 1518 弄',
-                status: '进行中',
-                all: 200,  //总报名人数
-                new: 150,  
-                old: 50,
-                payed: 190,
-                unpayed: 10,
-            }],
+            list: [],
 
             total: 0,
             listQuery: {
                 page: 1,
                 limit: 10,
-                importance: undefined,
-                title: undefined,
-                type: undefined,
-                sort: '+id'
+
+                name: undefined,
+                company: undefined
             },
           
             dialogFormVisible: false,
             dialogStatus: '',
             textMap: {
-                update: '编辑机构',
-                create: '新建机构'
+                update: '编辑课程',
+                create: '新建课程'
             },
 
             temp: {
                 name: '',
-                imgurl: '',
-                address: '',
-                phone: '',
+                company: '',
+                img: '',
+                ori_price: 0,
+                price: undefined,
+                class: '',
+                status:'进行中',
+                all: 0,
+                new: 0,
+                old: 0,
+                payed: 0,
+                unpayed: 0              
             },
             rules:{
                 name: [{ required: true, message: '请输入机构名称', trigger: 'blur' }],
-                imgurl: [{ required: true, message: '请上传封面', trigger: 'blur' }],
-                address: [{ required: true, message: '请输入机构地址', trigger: 'change' }],
-                phone: [{ required: true, message: '请输入联系方式', trigger: 'change' }]
-            }
+                img: [{ required: true, message: '请上传封面', trigger: 'blur' }],
+                ori_price: [{ type: 'number', message: '价格必须为数字值'}],
+                price:[{ required: true, message: '请输入价格', trigger: 'blur' },
+                       { type: 'number', message: '价格必须为数字值'}],
+                company:[{ required: true, message: '请选择机构', trigger: 'blur' }],
+                class:[{ required: true, message: '请输入课时', trigger: 'blur' }],
+            },
+            upload_api: process.env.VUE_APP_UPLOAD_API,
+            CompanyList: [],
+            imgList: []
         
 
         }
     },
     created() {
         this.getList()
+        this.getCompanyList()
     },
     methods:{
         getList() {
             this.listLoading = true
-            //后台根据下面两个参数查找数据
-            console.log(this.listQuery.page)
-            console.log(this.listQuery.limit)
-            this.list = this.list
-            this.total = this.list.length
-            setTimeout(() => {
+            fetchList(this.listQuery).then(response => {
+                this.list = response.data.items
+                this.total = response.data.total
                 this.listLoading = false
-            }, 1.5 * 1000)           
-            // fetchList(this.listQuery).then(response => {
-            //     this.list = response.data.items
-            //     this.total = response.data.total
+            })
 
-            //     // Just to simulate the time of the request
-            //     setTimeout(() => {
-            //     this.listLoading = false
-            //     }, 1.5 * 1000)
-            // })
-
+        },
+        getCompanyList(){
+            fetchCompanyList().then(response => {
+                this.CompanyList = response.data.items
+            })
+        },
+        handleFilter() {
+          this.listQuery.page = 1
+          this.getList()
         },
         resetTemp() {
             this.temp = {
                 name: '',
-                imgurl: '',
-                address: '',
-                phone:''
+                company: '',
+                img: '',
+                ori_price: 0,
+                price: undefined,
+                class: '',
+                status:'进行中',
+                all: 0,
+                new: 0,
+                old: 0,
+                payed: 0,
+                unpayed: 0  
             }
         },
         handleCreate() {
@@ -341,12 +304,20 @@ export default {
         createData() {
             this.$refs['dataForm'].validate((valid) => {
                 if (valid) {
-                    //调用创建机构接口
-                    console.log(this.temp)
+                    createCourse(this.temp).then(response => {
+                        this.list.unshift(response.data.item)
+                        this.dialogFormVisible = false
+                        this.$notify({
+                        title: 'Success',
+                        message: 'Created Successfully',
+                        type: 'success',
+                        duration: 2000
+                        })
+                    })                    
                 }
             })
         },
-
+        //ToDo
         handleUpdate(row) {
             this.temp = Object.assign({}, row) // copy obj
             this.dialogStatus = 'update'
@@ -374,30 +345,49 @@ export default {
             })
             this.list.splice(index, 1)
         },
+        //导出总表
+        handleDownload(){
+
+        },
+        handleRefresh(row, index){
+            console.log(index)
+        },
+        handleDraft(row,index){
+            console.log(index)
+        },
+        handlePublish(row,index){
+            console.log(index)
+        },
+        //导出单表
+        handleExport(row,index){
+            console.log(index)
+        },
+
+
+
+        //上传图片相关
+        beforeRemove(file, fileList) {
+            return this.$confirm(`确定移除 ${ file.name }？`);
+        },
         handleRemove(file, fileList) {
-            console.log(file, fileList);
+            let filename = file.response.data.path.split('/').slice(-1)[0]
+            deleteFile(filename).then(response => {
+                this.temp.img = ''     
+            })
         },
-        handlePreview(file) {
-            console.log(file);
+        handleExceed(files, fileList) {
+            this.$message.warning(`当前限制选择 1 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
         },
-        handleUploadSuccess(res, file) {
-            console.log(URL.createObjectURL(file.raw))
-            this.temp.imgurl = URL.createObjectURL(file.raw);
+        handleUploadSuccess(response, file, fileList) {
+            this.temp.img = file.response.data.path
         },
         beforeImageUpload(file) {
-            const isLt2M = file.size / 1024 / 1024 < 2;
-            if (!isLt2M) {
-            this.$message.error('上传头像图片大小不能超过 2MB!');
+            const isLt1M = file.size / 1024 / 1024 < 1;
+            if (!isLt1M) {
+            this.$message.error('上传图片大小不能超过 1MB!');
             }
-            return isLt2M;
-        },
-        handleDownload() {
-            this.downloadLoading = true
-            console.log("exporting")
-            setTimeout(() => {
-                this.downloadLoading = false
-            }, 1.5 * 1000)  
-        },
+            return isLt1M;
+        },       
 
     }
     

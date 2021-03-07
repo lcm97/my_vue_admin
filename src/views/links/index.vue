@@ -190,10 +190,11 @@ export default {
 
         handleUpdate(row) {
             this.temp = Object.assign({}, row) // copy obj
-            this.fileList = [{
-                name:row.music.split('/').slice(-1)[0],
-                url:row.music
-            }]
+            // this.fileList = [{
+            //     name:row.music.split('/').slice(-1)[0],
+            //     url:row.music
+            // }]
+            this.fileList = []
             this.dialogStatus = 'update'
             this.dialogFormVisible = true
             this.$nextTick(() => {

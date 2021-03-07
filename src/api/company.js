@@ -15,6 +15,14 @@ export function fetchLinkList() {
     })
 }
 
+export function createCompany(data) {
+    return request({
+        url: '/company/add',
+        method: 'post',
+        data
+    })
+}
+
 
 //根据id获取单条记录
 export function fetchLink(id) {
@@ -25,25 +33,19 @@ export function fetchLink(id) {
     })
 }
 
-export function createLink(data) {
-    return request({
-        url: '/links/add',
-        method: 'post',
-        data
-    })
-}
 
-export function updateLink(data) {
+
+export function updateCompany(data) {
     return request({
-        url: '/links/update',
+        url: '/company/update',
         method: 'put',
         data
     })
 }
 
-export function removeLink(data) {
+export function removeCompany(data) {
     return request({
-        url: '/links/remove',
+        url: '/company/remove',
         method: 'delete',
         data
     })
