@@ -8,13 +8,6 @@ export function fetchList(query) {
     })
 }
 
-export function fetchLinkList() {
-    return request({
-        url: '/links/findall',
-        method: 'get',
-    })
-}
-
 export function createCompany(data) {
     return request({
         url: '/company/add',
@@ -22,17 +15,6 @@ export function createCompany(data) {
         data
     })
 }
-
-
-//根据id获取单条记录
-export function fetchLink(id) {
-    return request({
-        url: '/links/info',
-        method: 'get',
-        params: { id }
-    })
-}
-
 
 
 export function updateCompany(data) {

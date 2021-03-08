@@ -190,8 +190,8 @@
 
 <script>
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
-import { fetchList, fetchLinkList, createCompany, updateCompany, removeCompany } from '@/api/company'
-import { deleteFile } from '@/api/common'
+import { fetchList, createCompany, updateCompany, removeCompany } from '@/api/company'
+import { deleteFile, fetchLinkList,} from '@/api/common'
 export default {
     components: { Pagination },
     data(){

@@ -124,6 +124,20 @@
                 <el-input v-model="temp.name" style="width: 400px; "/>
             </el-form-item>
 
+            <el-form-item label="选择所属链接" prop="link">
+              <el-select v-model="temp.link_id" filterable placeholder="请选择" style="width: 400px; " @change="selectChange">
+                <el-option
+                  v-for="item in Links"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id"
+                  style="width: 480px; ">
+                  <span style="float: left">{{ item.name }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ item.remark }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>
+
             <el-form-item label="选择所属机构" prop="company">
               <el-select v-model="temp.company" filterable placeholder="请选择" style="width: 400px; " >
                 <el-option
@@ -183,8 +197,8 @@
 
 <script>
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
-import { fetchList, fetchCompanyList, createCourse } from '@/api/course'
-import { deleteFile } from '@/api/common'
+import { fetchList, fetchCompanyList, createCourse, updateCourse, removeCourse, refreshCourse, draftCourse, publishCourse } from '@/api/course'
+import { deleteFile, fetchLinkList } from '@/api/common'
 export default {
     components: { Pagination },
     filters: {
@@ -207,6 +221,7 @@ export default {
             downloadLoading: false,
             list: [],
 
+            Links:[], //链接链表
             total: 0,
             listQuery: {
                 page: 1,
@@ -225,6 +240,7 @@ export default {
 
             temp: {
                 name: '',
+                link_id: undefined,
                 company: '',
                 img: '',
                 ori_price: 0,
@@ -243,6 +259,7 @@ export default {
                 ori_price: [{ type: 'number', message: '价格必须为数字值'}],
                 price:[{ required: true, message: '请输入价格', trigger: 'blur' },
                        { type: 'number', message: '价格必须为数字值'}],
+                link:[{ required: true, message: '请选择链接', trigger: 'blur' }],
                 company:[{ required: true, message: '请选择机构', trigger: 'blur' }],
                 class:[{ required: true, message: '请输入课时', trigger: 'blur' }],
             },
@@ -256,6 +273,7 @@ export default {
     created() {
         this.getList()
         this.getCompanyList()
+        this.getLinksList()
     },
     methods:{
         getList() {
@@ -266,6 +284,11 @@ export default {
                 this.listLoading = false
             })
 
+        },
+        getLinksList(){
+            fetchLinkList().then(response => {
+                this.Links = response.data.items
+            })
         },
         getCompanyList(){
             fetchCompanyList().then(response => {
@@ -279,6 +302,7 @@ export default {
         resetTemp() {
             this.temp = {
                 name: '',
+                link_id: undefined,
                 company: '',
                 img: '',
                 ori_price: 0,
@@ -320,6 +344,7 @@ export default {
         //ToDo
         handleUpdate(row) {
             this.temp = Object.assign({}, row) // copy obj
+            this.imgList = []
             this.dialogStatus = 'update'
             this.dialogFormVisible = true
             this.$nextTick(() => {
@@ -330,33 +355,81 @@ export default {
             this.$refs['dataForm'].validate((valid) => {
                 if (valid) {
                     const tempData = Object.assign({}, this.temp)
-                    //调用更新机构接口
-                    console.log(tempData)
+                    updateCourse(tempData).then(() => {
+                        const index = this.list.findIndex(v => v.id === this.temp.id)
+                        this.list.splice(index, 1, this.temp)
+                        this.dialogFormVisible = false
+                        this.$notify({
+                        title: 'Success',
+                        message: 'Update Successfully',
+                        type: 'success',
+                        duration: 2000
+                        })
+                    })
                 }
             })
         },
         handleDelete(row, index) {
-            console.log(row.name)
-            this.$notify({
-                title: 'Success',
-                message: 'Delete Successfully',
-                type: 'success',
-                duration: 2000
+            this.$confirm(`确定删除 ${ row.name }？`, `提示`, {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }).then(() => {
+              this.temp = Object.assign({}, row) 
+              removeCourse(this.temp).then(() => {
+                  this.$notify({
+                      title: 'Success',
+                      message: 'Delete Successfully',
+                      type: 'success',
+                      duration: 2000
+                  })
+                  this.list.splice(index, 1)
+              })
+            }).catch(() => {
+
+            });
+        },
+        selectChange(link_id){
+            fetchCompanyList(link_id).then(response => {
+                this.CompanyList = response.data.items
             })
-            this.list.splice(index, 1)
         },
         //导出总表
         handleDownload(){
 
         },
         handleRefresh(row, index){
-            console.log(index)
+            refreshCourse(row.id).then(response => {
+              this.list.splice(index, 1, response.data)
+            })
         },
+        //下架
         handleDraft(row,index){
-            console.log(index)
+            this.$confirm(`确定下架 ${ row.name }？`, `提示`, {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                draftCourse(row.id).then(() =>{
+                  let temp_obj = row
+                  temp_obj.status = '下架'
+                  this.list.splice(index, 1, temp_obj)
+                })
+            });
         },
+        //发布
         handlePublish(row,index){
-            console.log(index)
+            this.$confirm(`确定发布 ${ row.name }？`, `提示`, {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+              publishCourse(row.id).then(() =>{
+                let temp_obj = row
+                temp_obj.status = '进行中'
+                this.list.splice(index, 1, temp_obj)
+              })
+            });
         },
         //导出单表
         handleExport(row,index){

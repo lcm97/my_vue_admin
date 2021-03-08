@@ -30,3 +30,27 @@ export function logout() {
         method: 'post'
     })
 }
+
+export function fetchList(query) {
+    return request({
+        url: '/user/list',
+        method: 'get',
+        params: query
+    })
+}
+
+export function updateUser(data) {
+    return request({
+        url: '/user/update',
+        method: 'put',
+        data
+    })
+}
+
+export function removeUser(data) {
+    return request({
+        url: '/user/remove',
+        method: 'delete',
+        data
+    })
+}
