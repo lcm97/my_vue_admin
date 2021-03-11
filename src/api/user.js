@@ -54,3 +54,20 @@ export function removeUser(data) {
         data
     })
 }
+
+
+export function levelUp(data) {
+    return request({
+        url: '/group/add',
+        method: 'post',
+        data
+    })
+}
+
+export function isCap(id) { //传入用户的id号
+    return request({
+        url: '/group/iscap',
+        method: 'get',
+        params: { id }
+    })
+}

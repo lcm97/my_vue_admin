@@ -102,16 +102,13 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="270" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
           </el-button>
-          <el-button size="mini" type="info" @click="handleLevelUp(row,$index)">
-            升级
-          </el-button>
-          <el-button size="mini" type="info" @click="handleChangeGroup(row,$index)">
-            换团
+          <el-button size="mini" type="primary" @click="handleLevelUp(row,$index)">
+            升级团长
           </el-button>
           <el-button size="mini" type="danger" @click="handleDelete(row,$index)">
             删除
@@ -126,7 +123,7 @@
 
     <!--弹出表单-->
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :model="temp" label-position="left" label-width="110px" style="width: 600px; margin-left:50px;">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="110px" style="width: 600px; margin-left:50px;">
             <el-form-item label="姓名" prop="name">
                 <el-input v-model="temp.name" style="width: 400px; "/>
             </el-form-item>
@@ -139,7 +136,7 @@
               <el-select v-model="temp.link_id" filterable placeholder="请选择" style="width: 400px; " @change="selectChange1">
                 <el-option v-for="item in Links" :key="item.id" :label="item.name" :value="item.name" style="width: 480px; ">
                   <span style="float: left">{{ item.name }}</span>
-                  <span style="float: right; color: #8492a6; font-size: 13px">{{ item.id }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ item.remark }}</span>
                 </el-option>
               </el-select>
             </el-form-item>
@@ -165,6 +162,8 @@
               </el-select>
             </el-form-item>
 
+            <!-- 选择所在团___>根据团长名字与团号搜索 -->
+
             <el-form-item label="选择新老身份" prop="identity">
               <el-select v-model="temp.identity" filterable placeholder="请选择" style="width: 200px; " >
                 <el-option v-for="(item,index) in IdentityList" :key="index" :label="item" :value="item"
@@ -173,7 +172,8 @@
                   <span style="float: right; color: #8492a6; font-size: 13px">{{ index }}</span>
                 </el-option>
               </el-select>
-            </el-form-item>                   
+            </el-form-item>   
+                
 
       </el-form>
             
@@ -183,13 +183,43 @@
       </div>
     </el-dialog>
 
+
+    <!--弹出升级团长-->
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="LevelupFormVisible">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="110px" style="width: 600px; margin-left:50px;">
+            <el-form-item label="姓名" prop="name">
+                <el-input v-model="temp.name" style="width: 400px; "/>
+            </el-form-item>
+
+            <el-form-item label="电话" prop="phone">
+                <el-input v-model="temp.phone" style="width: 400px; "/>
+            </el-form-item>
+
+            <el-form-item label="选择所属链接" prop="link_id" >
+              <el-select v-model="temp.link_id" filterable placeholder="请选择" style="width: 400px; ">
+                <el-option v-for="item in Links" :key="item.id" :label="item.name" :value="item.id" style="width: 480px; ">
+                  <span style="float: left">{{ item.name }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ item.remark }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>           
+
+      </el-form>
+            
+      <div slot="footer" class="dialog-footer">
+            <el-button @click="LevelupFormVisible = false">取消</el-button>
+            <el-button type="primary" @click="LevelUp()">确认</el-button>
+      </div>
+    </el-dialog>
+
+
 </div>
     
 </template>
 
 <script>
 import Pagination from '@/components/Pagination' 
-import { fetchList, updateUser, removeUser} from '@/api/user'
+import { fetchList, updateUser, removeUser, levelUp, isCap} from '@/api/user'
 import { fetchLinkList,} from '@/api/common'
 import { fetchCompanyList, fetchCourseList} from '@/api/course'
 export default {
@@ -224,17 +254,22 @@ export default {
                 link_id: undefined, //所搜链接id
                 company: undefined, //所选择的机构名字
                 course: undefined, //所选择的课程名字
+
+                group_id: undefined //所参加团id
             },
           
             dialogFormVisible: false,
+            LevelupFormVisible: false,
             dialogStatus: '',
             textMap: {
                 update: '编辑用户',
-                create: '新建用户'
+                create: '新建用户',
+                levelup: '升级为团长'
             },
-            // rules:{
-            //     name: [{ required: true, message: '请输入机构名称', trigger: 'blur' }],
-            // },
+            rules:{
+                link_id: [{ required: true, message: '请选择所属链接', trigger: 'blur' }],
+                name: [{ required: true, message: '请填写团长姓名', trigger: 'blur' }],
+            },
             temp: {
                 name: '',
                 imgurl: '',
@@ -337,9 +372,45 @@ export default {
                 this.CourseList = response.data.items
             })
         },
+        //升级团长
         handleLevelUp(row, index){
-          console.log(row.id)
+          this.temp = Object.assign({}, row) // copy obj
+          this.dialogStatus = 'levelup'
+          isCap(this.temp.id).then(response => {
+            if(!response.data.items.length){
+              this.LevelupFormVisible = true
+              this.$nextTick(() => {
+              this.$refs['dataForm'].clearValidate()
+              })}else{
+                this.$notify({
+                  title: 'Success',
+                  message: '该成员已经是团长',
+                  type: 'success',
+                  duration: 2000
+                })
+            }
+          })
         },
+        LevelUp(){
+            this.$refs['dataForm'].validate((valid) => {
+                if (valid) {
+                    const tempData = Object.assign({}, this.temp)
+                    levelUp(tempData).then(response => {
+                        const index = this.list.findIndex(v => v.id === this.temp.id)
+                        this.temp.group_id = response.data.item.id
+                        this.list.splice(index, 1, this.temp)
+                        this.LevelupFormVisible = false
+                        this.$notify({
+                        title: 'Success',
+                        message: 'Update Successfully',
+                        type: 'success',
+                        duration: 2000
+                        })
+                    })
+                }
+            })
+        },
+        //更换团
         handleChangeGroup(row, index){
           console.log(row.id)
         }
