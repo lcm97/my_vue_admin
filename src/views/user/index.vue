@@ -134,7 +134,7 @@
 
             <el-form-item label="选择所属链接" prop="link_id" >
               <el-select v-model="temp.link_id" filterable placeholder="请选择" style="width: 400px; " @change="selectChange1">
-                <el-option v-for="item in Links" :key="item.id" :label="item.name" :value="item.name" style="width: 480px; ">
+                <el-option v-for="item in Links" :key="item.id" :label="item.name" :value="item.id" style="width: 480px; ">
                   <span style="float: left">{{ item.name }}</span>
                   <span style="float: right; color: #8492a6; font-size: 13px">{{ item.remark }}</span>
                 </el-option>
@@ -162,8 +162,6 @@
               </el-select>
             </el-form-item>
 
-            <!-- 选择所在团___>根据团长名字与团号搜索 -->
-
             <el-form-item label="选择新老身份" prop="identity">
               <el-select v-model="temp.identity" filterable placeholder="请选择" style="width: 200px; " >
                 <el-option v-for="(item,index) in IdentityList" :key="index" :label="item" :value="item"
@@ -173,7 +171,16 @@
                 </el-option>
               </el-select>
             </el-form-item>   
-                
+
+            <el-form-item v-if="!isCap" label="选择所在团" prop="group_id">
+              <el-select v-model="temp.group_id" filterable placeholder="请选择" style="width: 200px; " >
+                <el-option v-for="item in GroupList" :key="item.id" :label="item.cap_name" :value="item.id"
+                  style="width: 480px; ">
+                  <span style="float: left">{{ item.id }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ item.cap_name }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>                   
 
       </el-form>
             
@@ -219,7 +226,7 @@
 
 <script>
 import Pagination from '@/components/Pagination' 
-import { fetchList, updateUser, removeUser, levelUp, isCap} from '@/api/user'
+import { fetchList, updateUser, removeUser, levelUp, isCap, fetchGroupList} from '@/api/user'
 import { fetchLinkList,} from '@/api/common'
 import { fetchCompanyList, fetchCourseList} from '@/api/course'
 export default {
@@ -280,7 +287,10 @@ export default {
             Links:[], //链接链表
             CompanyList: [],
             CourseList: [],
-            IdentityList: ['新生','老生']
+            GroupList: [],
+            IdentityList: ['新生','老生'],
+
+            isCap: false
         
 
         }
@@ -322,6 +332,19 @@ export default {
             this.$nextTick(() => {
                 this.$refs['dataForm'].clearValidate()
             })
+            isCap(this.temp.id).then(response => {
+              if(response.data.items.length){
+                this.isCap = true
+              }else{
+                this.isCap = false
+                fetchCompanyList(this.temp.link_id).then(response => {
+                    this.CompanyList = response.data.items
+                })
+                fetchGroupList(this.temp.link_id).then(response => {
+                    this.GroupList = response.data.items
+                })
+              }
+            })            
         },
         updateData() {
             this.$refs['dataForm'].validate((valid) => {
@@ -365,6 +388,9 @@ export default {
         selectChange1(link_id){
             fetchCompanyList(link_id).then(response => {
                 this.CompanyList = response.data.items
+            })
+            fetchGroupList(link_id).then(response => {
+                this.GroupList = response.data.items
             })
         },
         selectChange2(company){

@@ -71,3 +71,11 @@ export function isCap(id) { //传入用户的id号
         params: { id }
     })
 }
+
+export function fetchGroupList(link_id) {
+    return request({
+        url: '/group/listbyid',
+        method: 'get',
+        params: { link_id }
+    })
+}
