@@ -345,6 +345,10 @@ export default {
         handleUpdate(row) {
             this.temp = Object.assign({}, row) // copy obj
             this.imgList = []
+            this.imgList = [{
+                name:row.img.split('/').slice(-1)[0],
+                url:row.img
+            }]
             this.dialogStatus = 'update'
             this.dialogFormVisible = true
             this.$nextTick(() => {
@@ -443,7 +447,7 @@ export default {
             return this.$confirm(`确定移除 ${ file.name }？`);
         },
         handleRemove(file, fileList) {
-            let filename = file.response.data.path.split('/').slice(-1)[0]
+            let filename = file.url===undefined? file.response.data.path.split('/').slice(-1)[0]:file.url.split('/').slice(-1)[0]
             deleteFile(filename).then(response => {
                 this.temp.img = ''     
             })
