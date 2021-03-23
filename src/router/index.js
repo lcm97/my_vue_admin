@@ -126,6 +126,21 @@ export const constantRoutes = [{
 
     },
     {
+        path: '/welfare',
+        component: Layout,
+        children: [{
+                path: 'index',
+                name: 'Welfare',
+                component: () =>
+                    import ('@/views/welfare/index'),
+                meta: { title: '福利管理', icon: 'el-icon-present' }
+
+            }
+
+        ]
+
+    },
+    {
         path: '/complaint',
         component: Layout,
         children: [{

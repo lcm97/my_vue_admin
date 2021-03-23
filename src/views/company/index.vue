@@ -309,24 +309,29 @@ export default {
               name: row.name,
               link_id: row.link_id,
               link_name: row.link_name,
-              //imglist: row.imglist.toString().replace(',', ' '),
-              //contacts: row.contacts.toString().replace(',', ' '),
-              imglist: '',
-              contacts: '',
+              imglist: row.imglist.toString().replace(',', ' '),
+              contacts: row.contacts.toString().replace(',', ' '),
               address: row.address,
               phone: row.phone,
               describe: row.describe
             }
             this.imgUploadList = []
+            row.imglist.forEach((v,i)=>{
+                let obj = {
+                    name: v.split('/').slice(-1)[0],
+                    url: v
+                }
+                this.imgUploadList.push(obj)
+            })
+
             this.contactUpList = []
-            // this.contactUpList = []
-            // row.contacts.forEach((v, i) => {
-            //   let obj = {
-            //      name: v.split('/').slice(-1)[0],
-            //      url: v
-            //   }
-            //   this.contactUpList.push(obj);
-            // });
+            row.contacts.forEach((v, i) => {
+              let obj = {
+                 name: v.split('/').slice(-1)[0],
+                 url: v
+              }
+              this.contactUpList.push(obj);
+            });
             
             this.dialogStatus = 'update'
             this.dialogFormVisible = true
@@ -406,23 +411,29 @@ export default {
             return this.$confirm(`确定移除 ${ file.name }？`);
         },
         handleRemove(file, fileList) {
-            let filename = file.response.data.path.split('/').slice(-1)[0]
+            let filename = file.url===undefined? file.response.data.path.split('/').slice(-1)[0]:file.url.split('/').slice(-1)[0]
             deleteFile(filename).then(response => {
-                this.temp.imglist=''
-                fileList.forEach(element => {
-                  this.temp.imglist+=' '+element.response.data.path
-                });
-                this.temp.imglist = this.temp.imglist.trim();       
+                let templist = ''
+                this.temp.imglist.split(' ').forEach(element=>{
+                    if(element.split('/').slice(-1)[0]!=filename){
+                        templist+=' '+element
+                    }
+                })
+                templist = templist.trim();
+                this.temp.imglist = templist    
             })
         },
         handleRemoveContact(file, fileList) {
-            let filename = file.response.data.path.split('/').slice(-1)[0]
+            let filename = file.url===undefined? file.response.data.path.split('/').slice(-1)[0]:file.url.split('/').slice(-1)[0]
             deleteFile(filename).then(response => {
-                this.temp.contacts=''
-                fileList.forEach(element => {
-                  this.temp.contacts+=' '+element.response.data.path
-                });
-                this.temp.contacts = this.temp.contacts.trim();     
+                let templist = ''
+                this.temp.contacts.split(' ').forEach(element => {
+                    if(element.split('/').slice(-1)[0]!=filename){
+                        templist+=' '+element
+                    }
+                })
+                templist = templist.trim();
+                this.temp.contacts = templist       
             })
         },
         handleExceed(files, fileList) {

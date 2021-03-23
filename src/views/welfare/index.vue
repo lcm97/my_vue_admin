@@ -2,7 +2,7 @@
 <div class="app-container">
     <div class="filter-container">
       <el-button class="filter-item"  type="primary" icon="el-icon-edit" @click="handleCreate">
-        添加链接
+        添加福利
       </el-button>
     </div>
     <el-table
@@ -21,33 +21,33 @@
         </template>
       </el-table-column>
 
-      <el-table-column align="center" label="链接名称" width="410">
+      <el-table-column align="center" label="福利标题" width="410">
         <template slot-scope="{row}">
-          <span>{{ row.name }}</span>
+          <span>{{ row.title }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column align="center" label="备注" width="410">
+      <el-table-column align="center" label="描述" width="410">
         <template slot-scope="{row}">
-          <span>{{ row.remark }}</span>
+          <span>{{ row.describe }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column align="center" label="音乐" width="410">
+       <el-table-column align="center" label="图片" width="250">
         <template slot-scope="{row}">
-          <audio controls :src="row.music" lazy>
-            您的浏览器不支持 audio 元素。
-        </audio>
+          <el-image
+            style="width: 150px; height: 110px"
+            :src="row.imglist[0]"
+            :preview-src-list="row.imglist"
+            lazy>
+          </el-image>
         </template>
-      </el-table-column>
+      </el-table-column>  
 
       <el-table-column label="操作" align="center" width="330" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
-          </el-button>
-         <el-button type="primary" size="mini" @click="handleQRcode(row)">
-            生成二维码
           </el-button>
           <el-button v-if="row.status!='deleted'" size="mini" type="danger" @click="handleDelete(row,$index)">
             删除
@@ -62,28 +62,36 @@
     <!--弹出表单-->
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="110px" style="width: 600px; margin-left:50px;">
-            <el-form-item label="链接名字" prop="name">
-                <el-input v-model="temp.name" style="width: 450px; "/>
+            <el-form-item label="福利标题" prop="title">
+                <el-input v-model="temp.title" style="width: 450px; "/>
             </el-form-item>
 
-            <el-form-item label="备注" prop="remark">
-                <el-input v-model="temp.remark" style="width: 450px;"/>
-            </el-form-item>    
-            <el-form-item label="上传音乐" prop="music">
+            <el-form-item label="福利描述" prop="remark">
+                <el-input v-model="temp.describe" 
+                style="width: 450px;"   
+                type="textarea"
+                :rows="3"/>
+            </el-form-item>  
+
+            <el-form-item label="上传图片" prop="imglist">
                 <el-upload
+                    ref="upload"
                     class="upload-demo"
                     v-bind:action= "upload_api"
-                    accept="audio/*"
                     :before-remove="beforeRemove"
                     :on-remove="handleRemove"
-                    :limit="1"
-                    :on-exceed="handleExceed"
                     :on-success="handleUploadSuccess"
-                    :file-list="fileList">
+                    :before-upload="beforeImageUpload"
+                    :on-exceed="handleExceed"
+                    multiple
+                    :limit="3"
+                    :file-list="imgUploadList"
+                    accept="image/png,image/jpg,image/jpeg"
+                    >
                     <el-button size="small" type="primary">点击上传</el-button>
-                    <div slot="tip" class="el-upload__tip">只能上传mp3/wav文件</div>
+                    <div slot="tip" class="el-upload__tip">请上传小于3张jpg/png/jpeg文件,且小于1M</div>
                 </el-upload>
-            </el-form-item>                
+            </el-form-item>             
 
 
       </el-form>
@@ -101,8 +109,9 @@
 
 <script>
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
-import { fetchList, fetchLink, createLink, updateLink, removeLink } from '@/api/links'
-
+//import { fetchList, fetchLink, createLink, updateLink, removeLink } from '@/api/links'
+import { fetchList, createWelfare, removeWelfare, updateWelfare } from  '@/api/welfare'
+import { deleteFile, } from '@/api/common'
 export default {
     components: { Pagination },
     data(){
@@ -114,31 +123,28 @@ export default {
             listQuery: {
                 page: 1,
                 limit: 10,
-                name: undefined,
-                remark: undefined,
             },
           
             dialogFormVisible: false,
             dialogStatus: '',
             textMap: {
-                update: '编辑链接',
-                create: '新建链接'
+                update: '编辑福利',
+                create: '新建福利'
             },
 
             temp: {
                 id: undefined,
-                name: '',
-                remark: '',
-                music: '',
+                title: '',
+                describe: '',
+                imglist: '',
             },
             rules:{
-                name: [{ required: true, message: '请输入链接名称', trigger: 'blur' }],
-                remark: [{ required: true, message: '请输入备注', trigger: 'change' }],
-                music:[{ required: true, message: '请上传图片', trigger: 'change' }],
+                title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
+                imglist:[{ required: true, message: '请上传图片', trigger: 'change' }],
             },
 
             upload_api: process.env.VUE_APP_UPLOAD_API,
-            fileList:[]
+            imgUploadList:[], 
     
         }
     },
@@ -156,15 +162,15 @@ export default {
         },
         resetTemp() {
             this.temp = {
-                id:undefined,
-                name: '',
-                remark: '',
-                music: ''
+                id: undefined,
+                title: '',
+                describe: '',
+                imglist: '',
             }
         },
         handleCreate() {
             this.resetTemp()
-            this.fileList = []
+            this.imgUploadList = []
             this.dialogStatus = 'create'
             this.dialogFormVisible = true
             this.$nextTick(() => {
@@ -175,7 +181,7 @@ export default {
         createData() {
             this.$refs['dataForm'].validate((valid) => {
                 if (valid) {
-                    createLink(this.temp).then(response => {
+                    createWelfare(this.temp).then(response => {
                         this.list.unshift(response.data.item)
                         this.dialogFormVisible = false
                         this.$notify({
@@ -190,13 +196,21 @@ export default {
         },
 
         handleUpdate(row) {
-            this.temp = Object.assign({}, row) // copy obj
-            this.fileList = [{
-                name:row.music.split('/').slice(-1)[0],
-                url:row.music
-            }]
+            this.temp = {
+                id: row.id,
+                title: row.title,
+                describe: row.describe,
+                imglist: row.imglist.toString().replace(',', ' '),
+            }
+            this.imgUploadList = []
+            row.imglist.forEach((v,i)=>{
+                let obj = {
+                    name: v.split('/').slice(-1)[0],
+                    url: v
+                }
+                this.imgUploadList.push(obj)
+            })
 
-            //this.fileList = []
             this.dialogStatus = 'update'
             this.dialogFormVisible = true
             this.$nextTick(() => {
@@ -207,9 +221,15 @@ export default {
             this.$refs['dataForm'].validate((valid) => {
                 if (valid) {
                     const tempData = Object.assign({}, this.temp)
-                    updateLink(tempData).then(() => {
+                    updateWelfare(tempData).then(() => {
                         const index = this.list.findIndex(v => v.id === this.temp.id)
-                        this.list.splice(index, 1, this.temp)
+                        let temp_obj = {
+                            id: this.temp.id,
+                            title: this.temp.title,
+                            describe: this.temp.describe,
+                            imglist: this.temp.imglist.split(' '),
+                        }
+                        this.list.splice(index, 1, temp_obj)
                         this.dialogFormVisible = false
                         this.$notify({
                         title: 'Success',
@@ -224,7 +244,7 @@ export default {
 
         handleDelete(row, index) {
             this.temp = Object.assign({}, row) // copy obj
-            removeLink(this.temp).then(() => {
+            removeWelfare(this.temp).then(() => {
                 this.$notify({
                     title: 'Success',
                     message: 'Delete Successfully',
@@ -242,24 +262,30 @@ export default {
         handleRemove(file, fileList) {
             let filename = file.url===undefined? file.response.data.path.split('/').slice(-1)[0]:file.url.split('/').slice(-1)[0]
             deleteFile(filename).then(response => {
-                // let templist = ''
-                // this.temp.imglist.split(' ').forEach(element=>{
-                //     if(element.split('/').slice(-1)[0]!=filename){
-                //         templist+=' '+element
-                //     }
-                // })
-                // templist = templist.trim();
-                this.temp.music  = ''
+                let templist = ''
+                this.temp.imglist.split(' ').forEach(element=>{
+                    if(element.split('/').slice(-1)[0]!=filename){
+                        templist+=' '+element
+                    }
+                })
+                templist = templist.trim();
+                this.temp.imglist = templist
             })
             
         },
-        handleExceed(files, fileList) {
-            this.$message.warning(`当前限制选择 1 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
+        beforeImageUpload(file) {
+            const isLt1M = file.size / 1024 / 1024 < 1;
+            if (!isLt1M) {
+            this.$message.error('上传图片大小不能超过 1MB!');
+            }
+            return isLt1M;
         },
         handleUploadSuccess(response, file, fileList) {
-            //console.log(file.response.data.path)
-            this.temp.music = file.response.data.path
-        }
+            this.temp.imglist+=this.temp.imglist===''?file.response.data.path:' '+file.response.data.path
+        },
+        handleExceed(files, fileList) {
+            this.$message.warning(`当前限制选择 3 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
+        },
 
     }
     
