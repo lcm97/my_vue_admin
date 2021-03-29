@@ -112,6 +112,8 @@ import Pagination from '@/components/Pagination' // secondary package based on e
 //import { fetchList, fetchLink, createLink, updateLink, removeLink } from '@/api/links'
 import { fetchList, createWelfare, removeWelfare, updateWelfare } from  '@/api/welfare'
 import { deleteFile, } from '@/api/common'
+import {Loading} from 'element-ui'
+
 export default {
     components: { Pagination },
     data(){
@@ -145,6 +147,7 @@ export default {
 
             upload_api: process.env.VUE_APP_UPLOAD_API,
             imgUploadList:[], 
+            fullscreenLoading:undefined
     
         }
     },
@@ -243,16 +246,25 @@ export default {
         },
 
         handleDelete(row, index) {
-            this.temp = Object.assign({}, row) // copy obj
-            removeWelfare(this.temp).then(() => {
-                this.$notify({
-                    title: 'Success',
-                    message: 'Delete Successfully',
-                    type: 'success',
-                    duration: 2000
+            this.$confirm(`确定删除 ${ row.id }？`, `提示`, {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                this.temp = Object.assign({}, row) // copy obj
+                removeWelfare(this.temp).then(() => {
+                    this.$notify({
+                        title: 'Success',
+                        message: 'Delete Successfully',
+                        type: 'success',
+                        duration: 2000
+                    })
+                    this.list.splice(index, 1)
                 })
-                this.list.splice(index, 1)
-            })
+            }).catch(() => {
+
+            });
+
 
         },
 
@@ -278,10 +290,19 @@ export default {
             if (!isLt1M) {
             this.$message.error('上传图片大小不能超过 1MB!');
             }
+            this.fullscreenLoading = Loading.service({
+                lock: true,
+                text: '文件上传中...',
+                spinner: 'el-icon-loading',
+                background: 'rgba(0, 0, 0, 0.7)'
+            })
             return isLt1M;
         },
         handleUploadSuccess(response, file, fileList) {
             this.temp.imglist+=this.temp.imglist===''?file.response.data.path:' '+file.response.data.path
+            this.fullscreenLoading.close();
+
+            this.$message('文件上传成功');
         },
         handleExceed(files, fileList) {
             this.$message.warning(`当前限制选择 3 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);

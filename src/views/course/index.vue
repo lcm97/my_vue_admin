@@ -4,12 +4,9 @@
       <el-button class="filter-item"  type="primary" icon="el-icon-edit" @click="handleCreate">
         添加课程
       </el-button>
-      <el-button  :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">
-        导出总表
-      </el-button>
       <el-input v-model="listQuery.name" placeholder="课程名称" style="width: 200px;margin-left:20px" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-select v-model="listQuery.company" placeholder="所属机构" clearable class="filter-item" style="width: 280px">
-        <el-option v-for="item in CompanyList" :key="item.id" :label="item.name" :value="item.name" />
+      <el-select v-model="listQuery.link_id" placeholder="所属链接" clearable class="filter-item" style="width: 280px">
+        <el-option v-for="item in Links" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
         搜索
@@ -36,6 +33,12 @@
           <span>{{ row.name }}</span>
         </template>
       </el-table-column>
+
+       <el-table-column align="center" label="所属链接id" width="210">
+        <template slot-scope="{row}">
+          <span>{{ row.link_id }}</span>
+        </template>
+      </el-table-column>  
 
        <el-table-column align="center" label="所属机构" width="210">
         <template slot-scope="{row}">
@@ -124,7 +127,7 @@
                 <el-input v-model="temp.name" style="width: 400px; "/>
             </el-form-item>
 
-            <el-form-item label="选择所属链接" prop="link">
+            <el-form-item label="选择所属链接" prop="link_id">
               <el-select v-model="temp.link_id" filterable placeholder="请选择" style="width: 400px; " @change="selectChange">
                 <el-option
                   v-for="item in Links"
@@ -199,6 +202,7 @@
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import { fetchList, fetchCompanyList, createCourse, updateCourse, removeCourse, refreshCourse, draftCourse, publishCourse } from '@/api/course'
 import { deleteFile, fetchLinkList } from '@/api/common'
+import { Loading} from 'element-ui'
 export default {
     components: { Pagination },
     filters: {
@@ -228,7 +232,7 @@ export default {
                 limit: 10,
 
                 name: undefined,
-                company: undefined
+                link_id: undefined,
             },
           
             dialogFormVisible: false,
@@ -259,20 +263,20 @@ export default {
                 ori_price: [{ type: 'number', message: '价格必须为数字值'}],
                 price:[{ required: true, message: '请输入价格', trigger: 'blur' },
                        { type: 'number', message: '价格必须为数字值'}],
-                link:[{ required: true, message: '请选择链接', trigger: 'blur' }],
+                link_id:[{ required: true, message: '请选择链接', trigger: 'blur' }],
                 company:[{ required: true, message: '请选择机构', trigger: 'blur' }],
                 class:[{ required: true, message: '请输入课时', trigger: 'blur' }],
             },
             upload_api: process.env.VUE_APP_UPLOAD_API,
             CompanyList: [],
-            imgList: []
+            imgList: [],
+            fullscreenLoading:undefined
         
 
         }
     },
     created() {
         this.getList()
-        this.getCompanyList()
         this.getLinksList()
     },
     methods:{
@@ -283,16 +287,10 @@ export default {
                 this.total = response.data.total
                 this.listLoading = false
             })
-
         },
         getLinksList(){
             fetchLinkList().then(response => {
                 this.Links = response.data.items
-            })
-        },
-        getCompanyList(){
-            fetchCompanyList().then(response => {
-                this.CompanyList = response.data.items
             })
         },
         handleFilter() {
@@ -318,6 +316,7 @@ export default {
         },
         handleCreate() {
                 this.resetTemp()
+                this.imgList = []
                 this.dialogStatus = 'create'
                 this.dialogFormVisible = true
                 this.$nextTick(() => {
@@ -333,7 +332,7 @@ export default {
                         this.dialogFormVisible = false
                         this.$notify({
                         title: 'Success',
-                        message: 'Created Successfully',
+                        message: '创建成功',
                         type: 'success',
                         duration: 2000
                         })
@@ -396,15 +395,17 @@ export default {
         selectChange(link_id){
             fetchCompanyList(link_id).then(response => {
                 this.CompanyList = response.data.items
+                //console.log(response.data.items)
             })
         },
-        //导出总表
-        handleDownload(){
-
-        },
+        //刷新
         handleRefresh(row, index){
             refreshCourse(row.id).then(response => {
               this.list.splice(index, 1, response.data)
+              this.$message({
+                message: '刷新成功',
+                type: 'success'
+              });
             })
         },
         //下架
@@ -418,6 +419,10 @@ export default {
                   let temp_obj = row
                   temp_obj.status = '下架'
                   this.list.splice(index, 1, temp_obj)
+                  this.$message({
+                    message: '该课程下架成功',
+                    type: 'success'
+                  });
                 })
             });
         },
@@ -432,6 +437,10 @@ export default {
                 let temp_obj = row
                 temp_obj.status = '进行中'
                 this.list.splice(index, 1, temp_obj)
+                this.$message({
+                    message: '该课程发布成功',
+                    type: 'success'
+                });
               })
             });
         },
@@ -457,12 +466,20 @@ export default {
         },
         handleUploadSuccess(response, file, fileList) {
             this.temp.img = file.response.data.path
+            this.fullscreenLoading.close();
         },
         beforeImageUpload(file) {
             const isLt1M = file.size / 1024 / 1024 < 1;
             if (!isLt1M) {
             this.$message.error('上传图片大小不能超过 1MB!');
             }
+            this.fullscreenLoading = Loading.service({
+                lock: true,
+                text: '文件上传中...',
+                spinner: 'el-icon-loading',
+                background: 'rgba(0, 0, 0, 0.7)'
+            })
+
             return isLt1M;
         },       
 

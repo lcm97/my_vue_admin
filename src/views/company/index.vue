@@ -5,7 +5,7 @@
         添加机构
       </el-button>
       <el-input v-model="listQuery.name" placeholder="机构名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-select v-model="listQuery.linkname" placeholder="所属链接" clearable class="filter-item" style="width: 280px">
+      <el-select v-model="listQuery.link_id" placeholder="所属链接" clearable class="filter-item" style="width: 280px">
         <el-option v-for="item in Links" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
@@ -192,6 +192,8 @@
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import { fetchList, createCompany, updateCompany, removeCompany } from '@/api/company'
 import { deleteFile, fetchLinkList,} from '@/api/common'
+import {Loading} from 'element-ui'
+
 export default {
     components: { Pagination },
     data(){
@@ -206,7 +208,8 @@ export default {
                 page: 1,
                 limit: 10,
 
-                name:undefined
+                name:undefined,
+                link_id:undefined
             },
           
             dialogFormVisible: false,
@@ -237,7 +240,9 @@ export default {
             },
             upload_api: process.env.VUE_APP_UPLOAD_API,
             imgUploadList:[],  //上传的封面图片列表
-            contactUpList:[]   //上传的二维码图片列表
+            contactUpList:[],   //上传的二维码图片列表
+
+            fullscreenLoading:undefined
 
         }
     },
@@ -294,7 +299,7 @@ export default {
                         this.dialogFormVisible = false
                         this.$notify({
                         title: 'Success',
-                        message: 'Created Successfully',
+                        message: '创建成功',
                         type: 'success',
                         duration: 2000
                         })
@@ -343,19 +348,18 @@ export default {
             this.$refs['dataForm'].validate((valid) => {
                 if (valid) {
                     const tempData = Object.assign({}, this.temp)
-                    //调用更新机构接口
                     updateCompany(tempData).then(() => {
-                        const index = this.list.findIndex(v => v.id === this.temp.id)
+                        const index = this.list.findIndex(v => v.id === tempData.id)
                         let temp_obj = {
-                            id: this.temp.id,
-                            name: this.temp.name,
-                            link_id: this.temp.link_id,
-                            link_name: this.temp.link_name,
-                            imglist: this.temp.imglist.split(' '),
-                            contacts: this.temp.contacts.split(' '),
-                            address: this.temp.address,
-                            phone: this.temp.phone,
-                            describe: this.temp.describe
+                            id: tempData.id,
+                            name: tempData.name,
+                            link_id: tempData.link_id,
+                            link_name: tempData.link_name,
+                            imglist: tempData.imglist.split(' '),
+                            contacts: tempData.contacts.split(' '),
+                            address: tempData.address,
+                            phone: tempData.phone,
+                            describe: tempData.describe
                         }
                         this.list.splice(index, 1, temp_obj )
                         this.dialogFormVisible = false
@@ -441,15 +445,24 @@ export default {
         },
         handleUploadSuccess(response, file, fileList) {
             this.temp.imglist+=this.temp.imglist===''?file.response.data.path:' '+file.response.data.path
+            this.fullscreenLoading.close();
         },
         handleContactSuccess(response, file, fileList) {
             this.temp.contacts+=this.temp.contacts===''?file.response.data.path:' '+file.response.data.path
+            this.fullscreenLoading.close();
         },
         beforeImageUpload(file) {
             const isLt1M = file.size / 1024 / 1024 < 1;
             if (!isLt1M) {
             this.$message.error('上传图片大小不能超过 1MB!');
             }
+
+            this.fullscreenLoading = Loading.service({
+                lock: true,
+                text: '文件上传中...',
+                spinner: 'el-icon-loading',
+                background: 'rgba(0, 0, 0, 0.7)'
+            })
             return isLt1M;
         },
     }

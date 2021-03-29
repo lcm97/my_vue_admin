@@ -79,6 +79,7 @@
                     :limit="1"
                     :on-exceed="handleExceed"
                     :on-success="handleUploadSuccess"
+                    :before-upload="handleBeforeUpload"
                     :file-list="fileList">
                     <el-button size="small" type="primary">点击上传</el-button>
                     <div slot="tip" class="el-upload__tip">只能上传mp3/wav文件</div>
@@ -102,6 +103,8 @@
 <script>
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import { fetchList, fetchLink, createLink, updateLink, removeLink } from '@/api/links'
+import { deleteFile} from '@/api/common'
+import {Loading} from 'element-ui'
 
 export default {
     components: { Pagination },
@@ -134,11 +137,12 @@ export default {
             rules:{
                 name: [{ required: true, message: '请输入链接名称', trigger: 'blur' }],
                 remark: [{ required: true, message: '请输入备注', trigger: 'change' }],
-                music:[{ required: true, message: '请上传图片', trigger: 'change' }],
+                music:[{ required: true, message: '请上传音乐', trigger: 'change' }],
             },
 
             upload_api: process.env.VUE_APP_UPLOAD_API,
-            fileList:[]
+            fileList:[],
+            fullscreenLoading:undefined
     
         }
     },
@@ -196,7 +200,6 @@ export default {
                 url:row.music
             }]
 
-            //this.fileList = []
             this.dialogStatus = 'update'
             this.dialogFormVisible = true
             this.$nextTick(() => {
@@ -223,17 +226,24 @@ export default {
         },
 
         handleDelete(row, index) {
-            this.temp = Object.assign({}, row) // copy obj
-            removeLink(this.temp).then(() => {
-                this.$notify({
-                    title: 'Success',
-                    message: 'Delete Successfully',
-                    type: 'success',
-                    duration: 2000
+            this.$confirm(`确定删除 ${ row.name }？`, `提示`, {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                this.temp = Object.assign({}, row) // copy obj
+                removeLink(this.temp).then(() => {
+                    this.$notify({
+                        title: 'Success',
+                        message: 'Delete Successfully',
+                        type: 'success',
+                        duration: 2000
+                    })
+                    this.list.splice(index, 1)
                 })
-                this.list.splice(index, 1)
-            })
+            }).catch(() => {
 
+            });
         },
 
         beforeRemove(file, fileList) {
@@ -256,10 +266,22 @@ export default {
         handleExceed(files, fileList) {
             this.$message.warning(`当前限制选择 1 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
         },
+        handleBeforeUpload(){
+            this.fullscreenLoading = Loading.service({
+                lock: true,
+                text: '文件上传中...',
+                spinner: 'el-icon-loading',
+                background: 'rgba(0, 0, 0, 0.7)'
+            })
+        },
         handleUploadSuccess(response, file, fileList) {
-            //console.log(file.response.data.path)
             this.temp.music = file.response.data.path
-        }
+            this.fullscreenLoading.close();
+
+            this.$message('文件上传成功');
+
+        },
+
 
     }
     
