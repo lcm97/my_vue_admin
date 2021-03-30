@@ -10,7 +10,7 @@
       </el-button>
     </div>
 
-    <div class="filter-container">
+    <div class="filter-container" style="margin-top:10px">
       <el-select v-model="listQuery.link_id" placeholder="选择所属链接" clearable class="filter-item" style="width: 280px"  @change="selectChange1">
         <el-option v-for="item in Links" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
@@ -70,6 +70,12 @@
         </template>
       </el-table-column>
 
+      <el-table-column align="center" label="所属链接id" width="150">
+        <template slot-scope="{row}">
+          <span>{{ row.link_id }}</span>
+        </template>
+      </el-table-column>
+
       <el-table-column align="center" label="课程" width="250">
         <template slot-scope="{row}">
           <span>{{ row.course }}</span>
@@ -82,9 +88,21 @@
         </template>
       </el-table-column>
 
+      <el-table-column align="center" label="年级" width="100">
+        <template slot-scope="{row}">
+          <span>{{ row.grade }}</span>
+        </template>
+      </el-table-column>
+
       <el-table-column align="center" label="团id" width="100">
         <template slot-scope="{row}">
           <span>{{ row.group_id }}</span>
+        </template>
+      </el-table-column>
+
+      <el-table-column align="center" label="是否团长" width="100">
+        <template slot-scope="{row}">
+          <span>{{ row.is_cap }}</span>
         </template>
       </el-table-column>
 
@@ -107,7 +125,11 @@
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
           </el-button>
-          <el-button size="mini" type="primary" @click="handleLevelUp(row,$index)">
+          <el-button v-if="row.is_cap=='否'" size="mini" type="primary" @click="handleChangeGroup(row,$index)">
+            更换团
+          </el-button>
+
+          <el-button v-if="row.is_cap=='是'" size="mini" type="primary" @click="handleLevelUp(row,$index)">
             升级团长
           </el-button>
           <el-button size="mini" type="danger" @click="handleDelete(row,$index)">
@@ -130,6 +152,10 @@
 
             <el-form-item label="电话" prop="phone">
                 <el-input v-model="temp.phone" style="width: 400px; "/>
+            </el-form-item>
+
+            <el-form-item label="年级" prop="phone">
+                <el-input v-model="temp.grade" style="width: 400px; "/>
             </el-form-item>
 
             <el-form-item label="选择所属链接" prop="link_id" >
@@ -170,17 +196,7 @@
                   <span style="float: right; color: #8492a6; font-size: 13px">{{ index }}</span>
                 </el-option>
               </el-select>
-            </el-form-item>   
-
-            <el-form-item v-if="!isCap" label="选择所在团" prop="group_id">
-              <el-select v-model="temp.group_id" filterable placeholder="请选择" style="width: 200px; " >
-                <el-option v-for="item in GroupList" :key="item.id" :label="item.cap_name" :value="item.id"
-                  style="width: 480px; ">
-                  <span style="float: left">{{ item.id }}</span>
-                  <span style="float: right; color: #8492a6; font-size: 13px">{{ item.cap_name }}</span>
-                </el-option>
-              </el-select>
-            </el-form-item>                   
+            </el-form-item>                    
 
       </el-form>
             
@@ -211,6 +227,36 @@
               </el-select>
             </el-form-item>           
 
+      </el-form>
+            
+      <div slot="footer" class="dialog-footer">
+            <el-button @click="LevelupFormVisible = false">取消</el-button>
+            <el-button type="primary" @click="LevelUp()">确认</el-button>
+      </div>
+    </el-dialog>
+
+
+    <!--弹出更换团-->
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="ChangeGroupFormVisible">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="110px" style="width: 600px; margin-left:50px;">
+            <el-form-item label="姓名" prop="name">
+                <el-input v-model="temp.name" :disabled="true" style="width: 400px; "/>
+            </el-form-item>
+
+            <el-form-item label="电话" prop="phone">
+                <el-input v-model="temp.phone" :disabled="true" style="width: 400px; "/>
+            </el-form-item>
+
+            <el-form-item label="选择所在团" prop="group_id">
+              <el-select v-model="temp.group_id" filterable placeholder="请选择" style="width: 200px; " >
+                <el-option v-for="item in GroupList" :key="item.id" :label="item.name" :value="item.id"
+                  style="width: 480px; ">
+                  <span style="float: left">{{ item.id }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ item.name }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>  
+        
       </el-form>
             
       <div slot="footer" class="dialog-footer">
@@ -267,21 +313,26 @@ export default {
           
             dialogFormVisible: false,
             LevelupFormVisible: false,
+            ChangeGroupFormVisible: false,
             dialogStatus: '',
             textMap: {
                 update: '编辑用户',
                 create: '新建用户',
-                levelup: '升级为团长'
+                levelup: '升级为团长',
+                change: '更换团'
             },
             rules:{
-                link_id: [{ required: true, message: '请选择所属链接', trigger: 'blur' }],
-                name: [{ required: true, message: '请填写团长姓名', trigger: 'blur' }],
             },
             temp: {
                 name: '',
-                imgurl: '',
-                address: '',
                 phone: '',
+                grade: '',
+                link_id: undefined,
+                course:'',
+                company:'',
+                identity:'',
+                group_id: undefined,
+
             },
             StatusList: ['未报名','已付款','未付款'],
             Links:[], //链接链表
@@ -320,9 +371,13 @@ export default {
         resetTemp() {
             this.temp = {
                 name: '',
-                imgurl: '',
-                address: '',
-                phone:''
+                phone: '',
+                grade: '',
+                link_id: undefined,
+                course:'',
+                company:'',
+                identity:'',
+                group_id: undefined,
             }
         },
         handleUpdate(row) {
@@ -332,19 +387,10 @@ export default {
             this.$nextTick(() => {
                 this.$refs['dataForm'].clearValidate()
             })
-            isCap(this.temp.id).then(response => {
-              if(response.data.items.length){
-                this.isCap = true
-              }else{
-                this.isCap = false
-                fetchCompanyList(this.temp.link_id).then(response => {
-                    this.CompanyList = response.data.items
-                })
-                fetchGroupList(this.temp.link_id).then(response => {
-                    this.GroupList = response.data.items
-                })
-              }
-            })            
+
+            // fetchCompanyList(this.temp.link_id).then(response => {
+            //         this.CompanyList = response.data.items
+            // })     
         },
         updateData() {
             this.$refs['dataForm'].validate((valid) => {
@@ -389,9 +435,6 @@ export default {
             fetchCompanyList(link_id).then(response => {
                 this.CompanyList = response.data.items
             })
-            fetchGroupList(link_id).then(response => {
-                this.GroupList = response.data.items
-            })
         },
         selectChange2(company){
             fetchCourseList(company).then(response => {
@@ -402,19 +445,9 @@ export default {
         handleLevelUp(row, index){
           this.temp = Object.assign({}, row) // copy obj
           this.dialogStatus = 'levelup'
-          isCap(this.temp.id).then(response => {
-            if(!response.data.items.length){
-              this.LevelupFormVisible = true
-              this.$nextTick(() => {
-              this.$refs['dataForm'].clearValidate()
-              })}else{
-                this.$notify({
-                  title: 'Success',
-                  message: '该成员已经是团长',
-                  type: 'success',
-                  duration: 2000
-                })
-            }
+          this.LevelupFormVisible = true
+          this.$nextTick(() => {
+            this.$refs['dataForm'].clearValidate()
           })
         },
         LevelUp(){
@@ -438,7 +471,35 @@ export default {
         },
         //更换团
         handleChangeGroup(row, index){
-          console.log(row.id)
+          //console.log(row.id)
+          this.temp = Object.assign({}, row) // copy obj
+          this.dialogStatus = 'change'
+          this.ChangeGroupFormVisible = true
+          this.$nextTick(() => {
+            this.$refs['dataForm'].clearValidate()
+          })
+          fetchGroupList(this.temp.link_id).then(response => {
+            this.GroupList = response.data.items
+            console.log(this.GroupList)
+          }) 
+        },
+        ChangeGroup(){
+            this.$refs['dataForm'].validate((valid) => {
+                if (valid) {
+                    const tempData = Object.assign({}, this.temp)
+                    updateUser(tempData).then(() => {
+                        const index = this.list.findIndex(v => v.id === this.temp.id)
+                        this.list.splice(index, 1, this.temp)
+                        this.ChangeGroupFormVisible = false
+                        this.$notify({
+                        title: 'Success',
+                        message: 'Update Successfully',
+                        type: 'success',
+                        duration: 2000
+                        })
+                    })
+                }
+            })
         }
 
 

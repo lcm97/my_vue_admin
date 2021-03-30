@@ -48,11 +48,17 @@
         </template>
       </el-table-column>
 
+      <el-table-column align="center" label="所属链接" width="180">
+        <template slot-scope="{row}">
+          <span>{{ row.link_id }}</span>
+        </template>
+      </el-table-column>
+
 
       <el-table-column label="参团人员" align="center" width="350" class-name="small-padding fixed-width">
         <template slot-scope="{row}" >
             <div>
-                <div v-if="row.crewlist.length>0" class="crew">
+                <div v-if="row.num>1" class="crew">
                     <div  v-for="(item,index) in row.crewlist" :key="index" style="margin-bottom:2px" class="crewitem">
                         <span style="margin-right:8px;width:60px;text-align: center;">{{item}}</span>
                     </div>

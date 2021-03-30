@@ -27,7 +27,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column align="center" label="备注" width="410">
+      <el-table-column align="center" label="备注" width="210">
         <template slot-scope="{row}">
           <span>{{ row.remark }}</span>
         </template>
@@ -40,6 +40,29 @@
         </audio>
         </template>
       </el-table-column>
+
+       <el-table-column align="center" label="联系人二维码" width="250">
+        <template slot-scope="{row}">
+          <el-image
+            style="width: 150px; height: 110px"
+            :src="row.contact"
+            :preview-src-list="[row.contact]"
+            lazy>
+          </el-image>
+        </template>
+      </el-table-column>  
+
+       <el-table-column align="center" label="海报" width="250">
+        <template slot-scope="{row}">
+          <el-image
+            style="width: 150px; height: 110px"
+            :src="row.poster"
+            :preview-src-list="[row.poster]"
+            lazy>
+          </el-image>
+        </template>
+      </el-table-column>  
+
 
       <el-table-column label="操作" align="center" width="330" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
@@ -84,7 +107,47 @@
                     <el-button size="small" type="primary">点击上传</el-button>
                     <div slot="tip" class="el-upload__tip">只能上传mp3/wav文件</div>
                 </el-upload>
-            </el-form-item>                
+            </el-form-item>     
+
+            <el-form-item label="上传海报" prop="poster">
+                <el-upload
+                    class="upload-demo"
+                    v-bind:action= "upload_api"
+                    :before-remove="beforeRemove"
+                    :on-remove="handleRemove2"
+                    :on-success="handleUploadSuccess2"
+                    :before-upload="beforeImageUpload"
+                    :on-exceed="handleExceed"
+                    multiple
+                    :limit="1"
+                    :file-list="posterList"
+                    accept="image/png,image/jpg,image/jpeg"
+                    >
+                    <el-button size="small" type="primary">点击上传</el-button>
+                    <div slot="tip" class="el-upload__tip">只能上传1张jpg/png/jpeg文件,且小于1M</div>
+                </el-upload>
+            </el-form-item>
+
+            <el-form-item label="联系人二维码" prop="contact">
+                <el-upload
+                    class="upload-demo"
+                    v-bind:action= "upload_api"
+                    :before-remove="beforeRemove"
+                    :on-remove="handleRemove3"
+                    :on-success="handleUploadSuccess3"
+                    :before-upload="beforeImageUpload"
+                    :on-exceed="handleExceed"
+                    multiple
+                    :limit="1"
+                    :file-list="contactList"
+                    accept="image/png,image/jpg,image/jpeg"
+                    >
+                    <el-button size="small" type="primary">点击上传</el-button>
+                    <div slot="tip" class="el-upload__tip">只能上传1张jpg/png/jpeg文件,且小于1M</div>
+                </el-upload>
+            </el-form-item>
+
+
 
 
       </el-form>
@@ -133,15 +196,20 @@ export default {
                 name: '',
                 remark: '',
                 music: '',
+                contact: '',
+                poster: '',
             },
             rules:{
                 name: [{ required: true, message: '请输入链接名称', trigger: 'blur' }],
                 remark: [{ required: true, message: '请输入备注', trigger: 'change' }],
                 music:[{ required: true, message: '请上传音乐', trigger: 'change' }],
+                contact:[{ required: true, message: '请上传联系人二维码', trigger: 'change' }],
             },
 
             upload_api: process.env.VUE_APP_UPLOAD_API,
             fileList:[],
+            posterList:[],
+            contactList:[],
             fullscreenLoading:undefined
     
         }
@@ -163,7 +231,9 @@ export default {
                 id:undefined,
                 name: '',
                 remark: '',
-                music: ''
+                music: '',
+                contact: '',
+                poster: '',
             }
         },
         handleCreate() {
@@ -199,7 +269,18 @@ export default {
                 name:row.music.split('/').slice(-1)[0],
                 url:row.music
             }]
-
+            if(row.poster==''){
+                this.posterList = []
+            }else{
+                this.posterList = [{
+                    name:row.poster.split('/').slice(-1)[0],
+                    url:row.poster
+                }]
+            }
+            this.contactList = [{
+                name:row.contact.split('/').slice(-1)[0],
+                url:row.contact
+            }]            
             this.dialogStatus = 'update'
             this.dialogFormVisible = true
             this.$nextTick(() => {
@@ -249,7 +330,7 @@ export default {
         beforeRemove(file, fileList) {
             return this.$confirm(`确定移除 ${ file.name }？`);
         },
-        handleRemove(file, fileList) {
+        handleRemove(file, fileList,) {
             let filename = file.url===undefined? file.response.data.path.split('/').slice(-1)[0]:file.url.split('/').slice(-1)[0]
             deleteFile(filename).then(response => {
                 // let templist = ''
@@ -263,6 +344,18 @@ export default {
             })
             
         },
+        handleRemove2(file, fileList) {
+            let filename = file.url===undefined? file.response.data.path.split('/').slice(-1)[0]:file.url.split('/').slice(-1)[0]
+            deleteFile(filename).then(response => {
+                this.temp.poster = ''     
+            })
+        },
+        handleRemove3(file, fileList) {
+            let filename = file.url===undefined? file.response.data.path.split('/').slice(-1)[0]:file.url.split('/').slice(-1)[0]
+            deleteFile(filename).then(response => {
+                this.temp.contact = ''     
+            })
+        },
         handleExceed(files, fileList) {
             this.$message.warning(`当前限制选择 1 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
         },
@@ -274,11 +367,31 @@ export default {
                 background: 'rgba(0, 0, 0, 0.7)'
             })
         },
+        beforeImageUpload(file) {
+            const isLt1M = file.size / 1024 / 1024 < 1;
+            if (!isLt1M) {
+            this.$message.error('上传图片大小不能超过 1MB!');
+            }
+            this.fullscreenLoading = Loading.service({
+                lock: true,
+                text: '文件上传中...',
+                spinner: 'el-icon-loading',
+                background: 'rgba(0, 0, 0, 0.7)'
+            })
+
+            return isLt1M;
+        },   
         handleUploadSuccess(response, file, fileList) {
             this.temp.music = file.response.data.path
             this.fullscreenLoading.close();
-
-            this.$message('文件上传成功');
+        },
+        handleUploadSuccess2(response, file, fileList) {
+            this.temp.poster = file.response.data.path
+            this.fullscreenLoading.close();
+        },
+        handleUploadSuccess3(response, file, fileList) {
+            this.temp.contact = file.response.data.path
+            this.fullscreenLoading.close();
 
         },
 

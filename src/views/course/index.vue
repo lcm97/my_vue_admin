@@ -183,7 +183,12 @@
 
             <el-form-item label="课时" prop="class">
                 <el-input v-model="temp.class" style="width: 200px;"/>
-            </el-form-item>         
+            </el-form-item>  
+
+            <el-form-item label="是否需年级信息" prop="is_grade">
+                <el-radio v-model="temp.is_grade" label="是">是</el-radio>
+                <el-radio v-model="temp.is_grade" label="否">否</el-radio>
+            </el-form-item>                     
 
       </el-form>
             
@@ -247,6 +252,7 @@ export default {
                 link_id: undefined,
                 company: '',
                 img: '',
+                is_grade: '是',
                 ori_price: 0,
                 price: undefined,
                 class: '',
@@ -303,6 +309,7 @@ export default {
                 link_id: undefined,
                 company: '',
                 img: '',
+                is_grade: '是',
                 ori_price: 0,
                 price: undefined,
                 class: '',
