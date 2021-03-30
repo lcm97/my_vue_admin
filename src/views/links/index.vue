@@ -63,6 +63,12 @@
         </template>
       </el-table-column>  
 
+      <el-table-column align="center" label="截止时间" width="210">
+        <template slot-scope="{row}">
+          <span>{{ row.deadline }}</span>
+        </template>
+      </el-table-column>
+
 
       <el-table-column label="操作" align="center" width="330" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
@@ -147,6 +153,18 @@
                 </el-upload>
             </el-form-item>
 
+            <el-form-item label="活动截止时间" prop="deadline">
+                <div class="block">
+                    <el-date-picker
+                    v-model="temp.deadline"
+                    type="datetime"
+                    value-format="yyyy-MM-dd HH:mm:ss"
+                    placeholder="选择日期时间">
+                    </el-date-picker>
+                </div>
+            </el-form-item>
+
+
 
 
 
@@ -198,12 +216,14 @@ export default {
                 music: '',
                 contact: '',
                 poster: '',
+                deadline: '',
             },
             rules:{
                 name: [{ required: true, message: '请输入链接名称', trigger: 'blur' }],
                 remark: [{ required: true, message: '请输入备注', trigger: 'change' }],
                 music:[{ required: true, message: '请上传音乐', trigger: 'change' }],
                 contact:[{ required: true, message: '请上传联系人二维码', trigger: 'change' }],
+                deadline:[{ required: true, message: '请选择截止时间', trigger: 'change' }],
             },
 
             upload_api: process.env.VUE_APP_UPLOAD_API,
@@ -234,6 +254,7 @@ export default {
                 music: '',
                 contact: '',
                 poster: '',
+                deadline: '',
             }
         },
         handleCreate() {
@@ -333,13 +354,6 @@ export default {
         handleRemove(file, fileList,) {
             let filename = file.url===undefined? file.response.data.path.split('/').slice(-1)[0]:file.url.split('/').slice(-1)[0]
             deleteFile(filename).then(response => {
-                // let templist = ''
-                // this.temp.imglist.split(' ').forEach(element=>{
-                //     if(element.split('/').slice(-1)[0]!=filename){
-                //         templist+=' '+element
-                //     }
-                // })
-                // templist = templist.trim();
                 this.temp.music  = ''
             })
             
@@ -392,6 +406,10 @@ export default {
         handleUploadSuccess3(response, file, fileList) {
             this.temp.contact = file.response.data.path
             this.fullscreenLoading.close();
+
+        },
+        handleQRcode(row){
+            console.log(row)
 
         },
 
