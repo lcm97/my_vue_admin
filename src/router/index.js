@@ -158,29 +158,36 @@ export const constantRoutes = [{
     {
         path: '/finance',
         component: Layout,
+        name: 'Finance',
+        redirect: 'noRedirect',
+        meta: {
+            title: '财务统计',
+            icon: 'el-icon-bank-card'
+        },
         children: [{
-                path: 'index',
-                name: 'Finance',
+                path: 'links',
+                name: 'LinksChart',
                 component: () =>
-                    import ('@/views/finance/index'),
-                meta: { title: '财务统计', icon: 'el-icon-bank-card' }
+                    import ('@/views/finance/links-chart'),
+                meta: { title: '链接统计', icon: 'el-icon-s-data' }
 
-            }
-
-        ]
-
-    },
-    {
-        path: '/time',
-        component: Layout,
-        children: [{
-                path: 'index',
-                name: 'Time',
+            },
+            {
+                path: 'company',
+                name: 'CompanyChart',
                 component: () =>
-                    import ('@/views/time/index'),
-                meta: { title: '倒计时设置', icon: 'el-icon-time' }
+                    import ('@/views/finance/company-chart'),
+                meta: { title: '机构统计', icon: 'el-icon-s-data' }
 
-            }
+            },
+            {
+                path: 'course',
+                name: 'CourseChart',
+                component: () =>
+                    import ('@/views/finance/course-chart'),
+                meta: { title: '课程统计', icon: 'el-icon-s-data' }
+
+            },
 
         ]
 
@@ -189,7 +196,7 @@ export const constantRoutes = [{
         path: 'external-link',
         component: Layout,
         children: [{
-            path: 'https://panjiachen.github.io/vue-element-admin-site/#/',
+            path: 'http://www.retr0.cn/',
             meta: { title: '外部链接', icon: 'link' }
         }]
     },

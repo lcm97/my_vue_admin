@@ -58,7 +58,15 @@ export function removeUser(data) {
 
 export function levelUp(data) {
     return request({
-        url: '/group/add',
+        url: '/group/levelup',
+        method: 'post',
+        data
+    })
+}
+
+export function groupChange(data) {
+    return request({
+        url: '/group/changegroup',
         method: 'post',
         data
     })
@@ -77,5 +85,13 @@ export function fetchGroupList(link_id) {
         url: '/group/listbyid',
         method: 'get',
         params: { link_id }
+    })
+}
+
+export function fetchExportUserList(query) {
+    return request({
+        url: '/user/exportlist',
+        method: 'get',
+        params: query
     })
 }

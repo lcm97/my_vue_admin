@@ -206,6 +206,7 @@
 <script>
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import { fetchList, fetchCompanyList, createCourse, updateCourse, removeCourse, refreshCourse, draftCourse, publishCourse } from '@/api/course'
+import { fetchExportUserList} from '@/api/user'
 import { deleteFile, fetchLinkList } from '@/api/common'
 import { Loading} from 'element-ui'
 export default {
@@ -239,7 +240,10 @@ export default {
                 name: undefined,
                 link_id: undefined,
             },
-          
+            exportListQuery:{
+                link_id: undefined,
+                course: undefined,
+            },
             dialogFormVisible: false,
             dialogStatus: '',
             textMap: {
@@ -453,11 +457,31 @@ export default {
         },
         //导出单表
         handleExport(row,index){
-            console.log(index)
+            this.listLoading = true
+            this.exportListQuery.link_id = row.link_id
+            this.exportListQuery.course = row.name
+            fetchExportUserList(this.exportListQuery).then(response=>{
+                this.listLoading = false
+                this.downloadLoading = true
+                import('@/vendor/Export2Excel').then(excel => {
+                    const tHeader = ['编号', '姓名', '手机', '年龄', '年级', '团编号', '是否团长', '项目','机构', '身份', '状态']
+                    const filterVal = ['id', 'name', 'phone', 'age', 'grade', 'group_id', 'is_cap', 'course','company','identity','status']
+                    const data = this.formatJson(filterVal, response.data.items)
+                    //console.log(data)
+                    excel.export_json_to_excel({
+                        header: tHeader,
+                        data,
+                        filename: row.name,
+                    })
+                    this.downloadLoading = false
+                })
+
+
+            })
         },
-
-
-
+        formatJson(filterVal, jsonData) {
+            return jsonData.map(v => filterVal.map(j => v[j]))
+        },
         //上传图片相关
         beforeRemove(file, fileList) {
             return this.$confirm(`确定移除 ${ file.name }？`);

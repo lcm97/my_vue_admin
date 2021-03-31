@@ -70,13 +70,17 @@
       </el-table-column>
 
 
-      <el-table-column label="操作" align="center" width="330" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="390" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
           </el-button>
          <el-button type="primary" size="mini" @click="handleQRcode(row)">
             生成二维码
+          </el-button>
+
+          <el-button type="success" :loading="downloadLoading" size="mini" @click="handleExport(row)">
+            导出表
           </el-button>
           <el-button v-if="row.status!='deleted'" size="mini" type="danger" @click="handleDelete(row,$index)">
             删除
@@ -184,8 +188,10 @@
 <script>
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import { fetchList, fetchLink, createLink, updateLink, removeLink } from '@/api/links'
+import { fetchExportUserList} from '@/api/user'
 import { deleteFile} from '@/api/common'
-import {Loading} from 'element-ui'
+import { Loading} from 'element-ui'
+import { formatTime } from '@/utils'
 
 export default {
     components: { Pagination },
@@ -200,6 +206,10 @@ export default {
                 limit: 10,
                 name: undefined,
                 remark: undefined,
+            },
+            exportListQuery:{
+                link_id: undefined,
+                course: undefined,
             },
           
             dialogFormVisible: false,
@@ -230,8 +240,10 @@ export default {
             fileList:[],
             posterList:[],
             contactList:[],
-            fullscreenLoading:undefined
-    
+            fullscreenLoading:undefined,
+            downloadLoading: false,
+            
+
         }
     },
     created() {
@@ -412,7 +424,32 @@ export default {
             console.log(row)
 
         },
+        handleExport(row){
+            this.listLoading = true
+            this.exportListQuery.link_id = row.id
+            fetchExportUserList(this.exportListQuery).then(response=>{
+                this.listLoading = false
+                this.downloadLoading = true
+                import('@/vendor/Export2Excel').then(excel => {
+                    const tHeader = ['编号', '姓名', '手机', '年龄', '年级', '团编号', '是否团长', '项目','机构', '身份', '状态']
+                    const filterVal = ['id', 'name', 'phone', 'age', 'grade', 'group_id', 'is_cap', 'course','company','identity','status']
+                    const data = this.formatJson(filterVal, response.data.items)
+                    //console.log(data)
+                    excel.export_json_to_excel({
+                        header: tHeader,
+                        data,
+                        filename: row.remark,
+                    })
+                    this.downloadLoading = false
+                })
 
+
+            })
+
+        },
+        formatJson(filterVal, jsonData) {
+            return jsonData.map(v => filterVal.map(j => v[j]))
+        }
 
     }
     

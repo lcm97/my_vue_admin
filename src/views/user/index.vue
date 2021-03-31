@@ -120,16 +120,16 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="操作" align="center" width="270" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="350" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
           </el-button>
-          <el-button v-if="row.is_cap=='否'" size="mini" type="primary" @click="handleChangeGroup(row,$index)">
+          <el-button v-if="row.is_cap=='否'&&row.status!='未报名'" size="mini" type="primary" @click="handleChangeGroup(row,$index)">
             更换团
           </el-button>
 
-          <el-button v-if="row.is_cap=='是'" size="mini" type="primary" @click="handleLevelUp(row,$index)">
+          <el-button v-if="row.is_cap=='否'&&row.status!='未报名'" size="mini" type="primary" @click="handleLevelUp(row,$index)">
             升级团长
           </el-button>
           <el-button size="mini" type="danger" @click="handleDelete(row,$index)">
@@ -211,15 +211,15 @@
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="LevelupFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="110px" style="width: 600px; margin-left:50px;">
             <el-form-item label="姓名" prop="name">
-                <el-input v-model="temp.name" style="width: 400px; "/>
+                <el-input v-model="temp.name" style="width: 400px; " disabled/>
             </el-form-item>
 
             <el-form-item label="电话" prop="phone">
-                <el-input v-model="temp.phone" style="width: 400px; "/>
+                <el-input v-model="temp.phone" style="width: 400px; " disabled/>
             </el-form-item>
 
             <el-form-item label="选择所属链接" prop="link_id" >
-              <el-select v-model="temp.link_id" filterable placeholder="请选择" style="width: 400px; ">
+              <el-select v-model="temp.link_id" filterable placeholder="请选择" style="width: 400px; " disabled>
                 <el-option v-for="item in Links" :key="item.id" :label="item.name" :value="item.id" style="width: 480px; ">
                   <span style="float: left">{{ item.name }}</span>
                   <span style="float: right; color: #8492a6; font-size: 13px">{{ item.remark }}</span>
@@ -248,7 +248,7 @@
             </el-form-item>
 
             <el-form-item label="选择所在团" prop="group_id">
-              <el-select v-model="temp.group_id" filterable placeholder="请选择" style="width: 200px; " >
+              <el-select v-model="temp.new_group_id" filterable placeholder="请选择" style="width: 200px; " >
                 <el-option v-for="item in GroupList" :key="item.id" :label="item.name" :value="item.id"
                   style="width: 480px; ">
                   <span style="float: left">{{ item.id }}</span>
@@ -261,7 +261,7 @@
             
       <div slot="footer" class="dialog-footer">
             <el-button @click="LevelupFormVisible = false">取消</el-button>
-            <el-button type="primary" @click="LevelUp()">确认</el-button>
+            <el-button type="primary" @click="ChangeGroup()">确认</el-button>
       </div>
     </el-dialog>
 
@@ -272,7 +272,7 @@
 
 <script>
 import Pagination from '@/components/Pagination' 
-import { fetchList, updateUser, removeUser, levelUp, isCap, fetchGroupList} from '@/api/user'
+import { fetchList, updateUser, removeUser, levelUp, groupChange, isCap, fetchGroupList} from '@/api/user'
 import { fetchLinkList,} from '@/api/common'
 import { fetchCompanyList, fetchCourseList} from '@/api/course'
 export default {
@@ -332,6 +332,8 @@ export default {
                 company:'',
                 identity:'',
                 group_id: undefined,
+                is_cap: '',
+                new_group_id: undefined
 
             },
             StatusList: ['未报名','已付款','未付款'],
@@ -378,6 +380,8 @@ export default {
                 company:'',
                 identity:'',
                 group_id: undefined,
+                is_cap: '',
+                new_group_id: undefined,
             }
         },
         handleUpdate(row) {
@@ -444,6 +448,7 @@ export default {
         //升级团长
         handleLevelUp(row, index){
           this.temp = Object.assign({}, row) // copy obj
+          console.log(this.temp)
           this.dialogStatus = 'levelup'
           this.LevelupFormVisible = true
           this.$nextTick(() => {
@@ -455,16 +460,19 @@ export default {
                 if (valid) {
                     const tempData = Object.assign({}, this.temp)
                     levelUp(tempData).then(response => {
-                        const index = this.list.findIndex(v => v.id === this.temp.id)
-                        this.temp.group_id = response.data.item.id
-                        this.list.splice(index, 1, this.temp)
-                        this.LevelupFormVisible = false
-                        this.$notify({
+                      //console.log(response)
+                      tempData.is_cap = '是'
+                      tempData.group_id = response.data.item.id
+                      const index = this.list.findIndex(v => v.id === tempData.id)
+                      this.list.splice(index, 1, tempData)
+                      this.LevelupFormVisible = false
+                      this.$notify({
                         title: 'Success',
                         message: 'Update Successfully',
                         type: 'success',
                         duration: 2000
-                        })
+                      })
+
                     })
                 }
             })
@@ -480,16 +488,17 @@ export default {
           })
           fetchGroupList(this.temp.link_id).then(response => {
             this.GroupList = response.data.items
-            console.log(this.GroupList)
+            //console.log(this.GroupList)
           }) 
         },
         ChangeGroup(){
             this.$refs['dataForm'].validate((valid) => {
                 if (valid) {
                     const tempData = Object.assign({}, this.temp)
-                    updateUser(tempData).then(() => {
-                        const index = this.list.findIndex(v => v.id === this.temp.id)
-                        this.list.splice(index, 1, this.temp)
+                    groupChange(tempData).then(() => {
+                        const index = this.list.findIndex(v => v.id === tempData.id)
+                        tempData.group_id = this.temp.new_group_id
+                        this.list.splice(index, 1, tempData)
                         this.ChangeGroupFormVisible = false
                         this.$notify({
                         title: 'Success',
