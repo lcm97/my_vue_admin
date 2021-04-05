@@ -92,6 +92,20 @@
     
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
 
+
+    <el-dialog
+        width="30%"
+        title="链接二维码"
+        @close="closeCode"
+        :visible.sync="qrcodeVisible"
+        append-to-body>
+        <div class="paycode">
+            <div id="qrcode" ref="qrcode"></div>
+        </div>
+        <div style="margin-top:20px;font-size:20px">链接地址</div>
+        <div class="link_address">{{link_address}}</div>
+    </el-dialog>
+
     <!--弹出表单-->
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="110px" style="width: 600px; margin-left:50px;">
@@ -106,6 +120,7 @@
                 <el-upload
                     class="upload-demo"
                     v-bind:action= "upload_api"
+                    :data="temp.id"
                     accept="audio/*"
                     :before-remove="beforeRemove"
                     :on-remove="handleRemove"
@@ -123,6 +138,7 @@
                 <el-upload
                     class="upload-demo"
                     v-bind:action= "upload_api"
+                    :data="temp.id"
                     :before-remove="beforeRemove"
                     :on-remove="handleRemove2"
                     :on-success="handleUploadSuccess2"
@@ -168,10 +184,6 @@
                 </div>
             </el-form-item>
 
-
-
-
-
       </el-form>
             
       <div slot="footer" class="dialog-footer">
@@ -192,6 +204,7 @@ import { fetchExportUserList} from '@/api/user'
 import { deleteFile} from '@/api/common'
 import { Loading} from 'element-ui'
 import { formatTime } from '@/utils'
+import QRCode from 'qrcodejs2'
 
 export default {
     components: { Pagination },
@@ -242,6 +255,8 @@ export default {
             contactList:[],
             fullscreenLoading:undefined,
             downloadLoading: false,
+            qrcodeVisible: false,
+            link_address: '',
             
 
         }
@@ -421,8 +436,25 @@ export default {
 
         },
         handleQRcode(row){
-            console.log(row)
-
+            let link_id = row.id
+            this.link_address = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx9921568c91d3e0d1&redirect_uri=http://www.20gzx.com&response_type=code&scope=snsapi_userinfo&state='+link_id+'#wechat_redirect'
+            this.qrcodeVisible = true
+            this.$nextTick(()=>{
+                this.createQrcode()
+            })
+        },
+        createQrcode(){
+            new QRCode(this.$refs.qrcode, {
+                width: 250,
+                height: 250,
+                text: this.link_address,    //二维码链接
+                colorDark: "#333",  //二维码颜色
+                colorLight: '#fff',    //二维码背景色
+                correctLevel: QRCode.CorrectLevel.L   //容错率    L/M/H
+            })
+        },
+        closeCode(){
+            this.$refs.qrcode.innerHTML = ''
         },
         handleExport(row){
             this.listLoading = true
@@ -457,5 +489,16 @@ export default {
 </script>
 
 <style scoped>
+.paycode{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.link_address{
+    font-size: 20px;
+    margin-top:20px;
+}
+
 
 </style>
