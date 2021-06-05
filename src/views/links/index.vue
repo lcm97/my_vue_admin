@@ -463,8 +463,8 @@ export default {
                 this.listLoading = false
                 this.downloadLoading = true
                 import('@/vendor/Export2Excel').then(excel => {
-                    const tHeader = ['编号', '姓名', '手机', '年龄', '年级', '团编号', '是否团长', '项目','机构', '身份', '状态']
-                    const filterVal = ['id', 'name', 'phone', 'age', 'grade', 'group_id', 'is_cap', 'course','company','identity','status']
+                    const tHeader = ['编号', '姓名', '手机', '年龄', '年级', '团编号', '是否团长', '项目','机构', '身份', '状态', '报名时间']
+                    const filterVal = ['id', 'name', 'phone', 'age', 'grade', 'group_id', 'is_cap', 'course','company','identity','status', 'updated_at']
                     const data = this.formatJson(filterVal, response.data.items)
                     //console.log(data)
                     excel.export_json_to_excel({
