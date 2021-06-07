@@ -1,6 +1,14 @@
 <template>
 <div class="app-container">
     <div class="filter-container">
+      <el-button class="filter-item" style="margin-right:8px" type="success" icon="el-icon-circle-plus-outline" @click="addOpenUser">
+        添加报名(开团)
+      </el-button>
+
+      <el-button class="filter-item" style="margin-right:25px" type="success" icon="el-icon-circle-plus-outline" @click="addJoinUser">
+        添加报名(参团)
+      </el-button>
+
       <el-input v-model="listQuery.name" placeholder="输入姓名" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter"/>
       <el-select v-model="listQuery.status" placeholder="选择状态" clearable class="filter-item" style="width: 280px">
         <el-option v-for="(item,index) in StatusList" :key="index" :label="item" :value="item" />
@@ -196,7 +204,19 @@
                   <span style="float: right; color: #8492a6; font-size: 13px">{{ index }}</span>
                 </el-option>
               </el-select>
-            </el-form-item>                    
+            </el-form-item>      
+
+            <!--后加，修改用户的付款状态-->
+            <el-form-item label="选择付款状态" prop="status">
+              <el-select v-model="temp.status" filterable placeholder="请选择" style="width: 200px; " >
+                <el-option v-for="(item,index) in StatusList" :key="index" :label="item" :value="item"
+                  style="width: 480px; ">
+                  <span style="float: left">{{ item }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ index }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>     
+
 
       </el-form>
             
@@ -333,7 +353,8 @@ export default {
                 identity:'',
                 group_id: undefined,
                 is_cap: '',
-                new_group_id: undefined
+                new_group_id: undefined,
+                status:'',
 
             },
             StatusList: ['未报名','已付款','未付款'],
@@ -382,19 +403,26 @@ export default {
                 group_id: undefined,
                 is_cap: '',
                 new_group_id: undefined,
+                status: '',
             }
         },
         handleUpdate(row) {
+            //加载机构和课程列表
             this.temp = Object.assign({}, row) // copy obj
+
+            fetchCompanyList(this.temp.link_id).then(response => {
+                this.CompanyList = response.data.items
+            })   
+            fetchCourseList(this.temp.company).then(response => {
+                this.CourseList = response.data.items
+            })
+
             this.dialogStatus = 'update'
             this.dialogFormVisible = true
             this.$nextTick(() => {
                 this.$refs['dataForm'].clearValidate()
             })
-
-            // fetchCompanyList(this.temp.link_id).then(response => {
-            //         this.CompanyList = response.data.items
-            // })     
+  
         },
         updateData() {
             this.$refs['dataForm'].validate((valid) => {
@@ -509,7 +537,15 @@ export default {
                     })
                 }
             })
-        }
+        },
+        addOpenUser(){
+          console.log("添加开团用户")
+
+        },
+        addJoinUser(){
+          console.log("添加参团用户")
+
+        },
 
 
     }
