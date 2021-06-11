@@ -72,6 +72,7 @@
 
       <el-table-column label="操作" align="center" width="390" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
+
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
           </el-button>
@@ -84,6 +85,10 @@
           </el-button>
           <el-button v-if="row.status!='deleted'" size="mini" type="danger" @click="handleDelete(row,$index)">
             删除
+          </el-button>
+
+          <el-button type="primary" size="mini" @click="emptyPics(row)">
+            清空图片
           </el-button>
         </template>
       </el-table-column> 
@@ -199,7 +204,7 @@
 
 <script>
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
-import { fetchList, fetchLink, createLink, updateLink, removeLink } from '@/api/links'
+import { fetchList, fetchLink, createLink, updateLink, removeLink, emptyLinkPics } from '@/api/links'
 import { fetchExportUserList} from '@/api/user'
 import { deleteFile} from '@/api/common'
 import { Loading} from 'element-ui'
@@ -309,6 +314,18 @@ export default {
                     })
                 }
             })
+        },
+        emptyPics(row){
+            emptyLinkPics({id:row.id}).then(()=>{
+                this.$notify({
+                    title: 'Success',
+                    message: 'Update Successfully',
+                    type: 'success',
+                    duration: 2000
+                })
+                this.getList()
+            })
+
         },
 
         handleUpdate(row) {

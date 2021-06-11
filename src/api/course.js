@@ -40,6 +40,14 @@ export function updateCourse(data) {
     })
 }
 
+export function emptyLinkPics(data) {
+    return request({
+        url: '/course/emptypics',
+        method: 'put',
+        data
+    })
+}
+
 export function removeCourse(data) {
     return request({
         url: '/course/remove',

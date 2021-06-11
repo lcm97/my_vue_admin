@@ -32,6 +32,14 @@ export function updateWelfare(data) {
     })
 }
 
+export function emptyLinkPics(data) {
+    return request({
+        url: '/welfare/emptypics',
+        method: 'put',
+        data
+    })
+}
+
 export function removeWelfare(data) {
     return request({
         url: '/welfare/remove',

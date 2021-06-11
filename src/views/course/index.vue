@@ -93,7 +93,7 @@
         </template>
       </el-table-column> 
 
-      <el-table-column label="操作" align="center" width="380" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="480" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
@@ -112,6 +112,10 @@
           </el-button>
           <el-button v-if="row.status!='删除'" size="mini" type="danger" @click="handleDelete(row,$index)">
             删除
+          </el-button>
+
+          <el-button type="primary" size="mini" @click="emptyPics(row)">
+            清空图片
           </el-button>
         </template>
       </el-table-column> 
@@ -205,7 +209,7 @@
 
 <script>
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
-import { fetchList, fetchCompanyList, createCourse, updateCourse, removeCourse, refreshCourse, draftCourse, publishCourse } from '@/api/course'
+import { fetchList, fetchCompanyList, createCourse, updateCourse, removeCourse, refreshCourse, draftCourse, publishCourse, emptyLinkPics } from '@/api/course'
 import { fetchExportUserList} from '@/api/user'
 import { deleteFile, fetchLinkList } from '@/api/common'
 import { Loading} from 'element-ui'
@@ -324,6 +328,18 @@ export default {
                 payed: 0,
                 unpayed: 0  
             }
+        },
+        emptyPics(row){
+            emptyLinkPics({id:row.id}).then(()=>{
+                this.$notify({
+                    title: 'Success',
+                    message: 'Update Successfully',
+                    type: 'success',
+                    duration: 2000
+                })
+                this.getList()
+            })
+
         },
         handleCreate() {
                 this.resetTemp()

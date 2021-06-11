@@ -25,6 +25,14 @@ export function updateCompany(data) {
     })
 }
 
+export function emptyLinkPics(data) {
+    return request({
+        url: '/company/emptypics',
+        method: 'put',
+        data
+    })
+}
+
 export function removeCompany(data) {
     return request({
         url: '/company/remove',

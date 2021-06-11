@@ -32,6 +32,14 @@ export function updateLink(data) {
     })
 }
 
+export function emptyLinkPics(data) {
+    return request({
+        url: '/links/emptypics',
+        method: 'put',
+        data
+    })
+}
+
 export function removeLink(data) {
     return request({
         url: '/links/remove',
