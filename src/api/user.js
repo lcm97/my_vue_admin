@@ -95,3 +95,11 @@ export function fetchExportUserList(query) {
         params: query
     })
 }
+
+export function addUser(data) {
+    return request({
+        url: '/user/add',
+        method: 'post',
+        data
+    })
+}

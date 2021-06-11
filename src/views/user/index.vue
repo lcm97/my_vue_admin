@@ -151,7 +151,7 @@
     
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
 
-    <!--弹出表单-->
+    <!--弹出表单 编辑用户-->
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="110px" style="width: 600px; margin-left:50px;">
             <el-form-item label="姓名" prop="name">
@@ -280,10 +280,171 @@
       </el-form>
             
       <div slot="footer" class="dialog-footer">
-            <el-button @click="LevelupFormVisible = false">取消</el-button>
+            <el-button @click="ChangeGroupFormVisible = false">取消</el-button>
             <el-button type="primary" @click="ChangeGroup()">确认</el-button>
       </div>
     </el-dialog>
+
+    <!--弹出表单 添加用户 开团-->
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="addOpenUserFormVisible">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="110px" style="width: 600px; margin-left:50px;">
+            <el-form-item label="姓名" prop="name">
+                <el-input v-model="temp.name" style="width: 400px; "/>
+            </el-form-item>
+
+            <el-form-item label="电话" prop="phone">
+                <el-input v-model="temp.phone" style="width: 400px; "/>
+            </el-form-item>
+
+            <el-form-item label="年级" prop="phone">
+                <el-input v-model="temp.grade" style="width: 400px; "/>
+            </el-form-item>
+
+            <el-form-item label="选择所属链接" prop="link_id" >
+              <el-select v-model="temp.link_id" filterable placeholder="请选择" style="width: 400px; " @change="selectChange1">
+                <el-option v-for="item in Links" :key="item.id" :label="item.name" :value="item.id" style="width: 480px; ">
+                  <span style="float: left">{{ item.name }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ item.remark }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>
+
+
+            <el-form-item label="选择所属机构" prop="company">
+              <el-select v-model="temp.company" filterable placeholder="请选择" style="width: 400px; " @change="selectChange2">
+                <el-option v-for="item in CompanyList" :key="item.id" :label="item.name" :value="item.name"
+                  style="width: 480px; ">
+                  <span style="float: left">{{ item.name }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ item.id }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="选择所属课程" prop="course">
+              <el-select v-model="temp.course" filterable placeholder="请选择" style="width: 400px; " >
+                <el-option v-for="item in CourseList" :key="item.id" :label="item.name" :value="item.name"
+                  style="width: 480px; ">
+                  <span style="float: left">{{ item.name }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ item.id }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="选择新老身份" prop="identity">
+              <el-select v-model="temp.identity" filterable placeholder="请选择" style="width: 200px; " >
+                <el-option v-for="(item,index) in IdentityList" :key="index" :label="item" :value="item"
+                  style="width: 480px; ">
+                  <span style="float: left">{{ item }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ index }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>      
+
+            <!--后加，修改用户的付款状态-->
+            <el-form-item label="选择付款状态" prop="status">
+              <el-select v-model="temp.status" filterable placeholder="请选择" style="width: 200px; " >
+                <el-option v-for="(item,index) in StatusList" :key="index" :label="item" :value="item"
+                  style="width: 480px; ">
+                  <span style="float: left">{{ item }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ index }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>     
+
+
+      </el-form>
+            
+      <div slot="footer" class="dialog-footer">
+            <el-button @click="addOpenUserFormVisible = false">取消</el-button>
+            <el-button type="primary" @click="handleOpenUser()">确认</el-button>
+      </div>
+    </el-dialog>
+
+    <!--弹出表单 添加用户 参团-->
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="addJoinUserFormVisible">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="110px" style="width: 600px; margin-left:50px;">
+            <el-form-item label="姓名" prop="name">
+                <el-input v-model="temp.name" style="width: 400px; "/>
+            </el-form-item>
+
+            <el-form-item label="电话" prop="phone">
+                <el-input v-model="temp.phone" style="width: 400px; "/>
+            </el-form-item>
+
+            <el-form-item label="年级" prop="phone">
+                <el-input v-model="temp.grade" style="width: 400px; "/>
+            </el-form-item>
+
+            <el-form-item label="选择所属链接" prop="link_id" >
+              <el-select v-model="temp.link_id" filterable placeholder="请选择" style="width: 400px; " @change="selectChange1_1">
+                <el-option v-for="item in Links" :key="item.id" :label="item.name" :value="item.id" style="width: 480px; ">
+                  <span style="float: left">{{ item.name }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ item.remark }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>
+
+
+            <el-form-item label="选择所属机构" prop="company">
+              <el-select v-model="temp.company" filterable placeholder="请选择" style="width: 400px; " @change="selectChange2">
+                <el-option v-for="item in CompanyList" :key="item.id" :label="item.name" :value="item.name"
+                  style="width: 480px; ">
+                  <span style="float: left">{{ item.name }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ item.id }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="选择所属课程" prop="course">
+              <el-select v-model="temp.course" filterable placeholder="请选择" style="width: 400px; " >
+                <el-option v-for="item in CourseList" :key="item.id" :label="item.name" :value="item.name"
+                  style="width: 480px; ">
+                  <span style="float: left">{{ item.name }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ item.id }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="选择新老身份" prop="identity">
+              <el-select v-model="temp.identity" filterable placeholder="请选择" style="width: 200px; " >
+                <el-option v-for="(item,index) in IdentityList" :key="index" :label="item" :value="item"
+                  style="width: 480px; ">
+                  <span style="float: left">{{ item }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ index }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>      
+
+            <!--后加，修改用户的付款状态-->
+            <el-form-item label="选择付款状态" prop="status">
+              <el-select v-model="temp.status" filterable placeholder="请选择" style="width: 200px; " >
+                <el-option v-for="(item,index) in StatusList" :key="index" :label="item" :value="item"
+                  style="width: 480px; ">
+                  <span style="float: left">{{ item }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ index }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>     
+
+            <el-form-item label="选择所在团" prop="group_id">
+              <el-select v-model="temp.group_id" filterable placeholder="请选择" style="width: 200px; " >
+                <el-option v-for="item in GroupList" :key="item.id" :label="item.name" :value="item.id"
+                  style="width: 480px; ">
+                  <span style="float: left">{{ item.id }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ item.name }}</span>
+                </el-option>
+              </el-select>
+            </el-form-item>  
+
+      </el-form>
+            
+      <div slot="footer" class="dialog-footer">
+            <el-button @click="addJoinUserFormVisible = false">取消</el-button>
+            <el-button type="primary" @click="handleJoinUser()">确认</el-button>
+      </div>
+    </el-dialog>
+
+
 
 
 </div>
@@ -292,9 +453,10 @@
 
 <script>
 import Pagination from '@/components/Pagination' 
-import { fetchList, updateUser, removeUser, levelUp, groupChange, isCap, fetchGroupList} from '@/api/user'
+import { fetchList, updateUser, removeUser, levelUp, groupChange, isCap, fetchGroupList, addUser} from '@/api/user'
 import { fetchLinkList,} from '@/api/common'
 import { fetchCompanyList, fetchCourseList} from '@/api/course'
+import { addGroup, updateGroupCapid, joinGroup, openGroup} from '@/api/group'
 export default {
     components: { Pagination },
     filters: {
@@ -334,12 +496,16 @@ export default {
             dialogFormVisible: false,
             LevelupFormVisible: false,
             ChangeGroupFormVisible: false,
+            addOpenUserFormVisible: false,
+            addJoinUserFormVisible: false,
             dialogStatus: '',
             textMap: {
                 update: '编辑用户',
                 create: '新建用户',
                 levelup: '升级为团长',
-                change: '更换团'
+                change: '更换团',
+                addopen: '添加开团用户',
+                addjoin: '添加参团用户',
             },
             rules:{
             },
@@ -355,7 +521,6 @@ export default {
                 is_cap: '',
                 new_group_id: undefined,
                 status:'',
-
             },
             StatusList: ['未报名','已付款','未付款'],
             Links:[], //链接链表
@@ -468,6 +633,16 @@ export default {
                 this.CompanyList = response.data.items
             })
         },
+        //选择添加参团用户使用
+        selectChange1_1(link_id){
+            fetchCompanyList(link_id).then(response => {
+                this.CompanyList = response.data.items
+            })
+            fetchGroupList(link_id).then(response => {
+              this.GroupList = response.data.items
+              console.log(this.GroupList)
+          }) 
+        },
         selectChange2(company){
             fetchCourseList(company).then(response => {
                 this.CourseList = response.data.items
@@ -538,16 +713,80 @@ export default {
                 }
             })
         },
+
+
+        //添加开团用户 
         addOpenUser(){
-          console.log("添加开团用户")
-
+          this.resetTemp()
+          this.temp.is_cap = '是'
+          this.temp.openid = Math.random().toString(36).substr(2, 15)
+          this.temp.avatar = 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'
+          this.dialogStatus = 'addopen'
+          this.addOpenUserFormVisible = true
+          this.$nextTick(() => {
+            this.$refs['dataForm'].clearValidate()
+          })
         },
+        handleOpenUser(){
+            this.$refs['dataForm'].validate((valid) => {
+                if (valid) {
+                  this.temp.group_id = 0
+                  //添加用户
+                  addUser(this.temp).then(response=>{
+                    this.list.unshift(response.data.item)
+                    const tempData = Object.assign({}, response.data.item)
+                    tempData.user_id = response.data.item.id
+
+                    openGroup(tempData).then(response=>{
+                      this.addOpenUserFormVisible = false
+                      this.$notify({
+                        title: 'Success',
+                        message: '添加用户成功',
+                        type: 'success',
+                        duration: 2000
+                      })
+
+                    })
+                  })
+
+                }
+            })
+        },
+
+        //添加参团用户  根据链接选择团id
         addJoinUser(){
-          console.log("添加参团用户")
-
+          this.resetTemp()
+          this.temp.is_cap = '否'
+          this.temp.openid = Math.random().toString(36).substr(2, 15)
+          this.temp.avatar = 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg'
+          this.dialogStatus = 'addjoin'
+          this.addJoinUserFormVisible = true
+          this.$nextTick(() => {
+            this.$refs['dataForm'].clearValidate()
+          })
         },
+        handleJoinUser(){
+            this.$refs['dataForm'].validate((valid) => {
+                if (valid) {
+                  addUser(this.temp).then(response=>{
+                    this.list.unshift(response.data.item)
+                    //this.addJoinUserFormVisible = false
+                    const tempData = Object.assign({}, response.data.item)
+                    tempData.user_id = response.data.item.id
 
-
+                    joinGroup(tempData).then(response=>{
+                      this.addJoinUserFormVisible = false
+                      this.$notify({
+                        title: 'Success',
+                        message: '添加用户成功',
+                        type: 'success',
+                        duration: 2000
+                      })
+                    })
+                  })
+                }
+            })
+        }
     }
     
 }
